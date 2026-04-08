@@ -1,0 +1,21 @@
+ID	        接口路径 (URL)	                     功能描述
+STU-01	/api/student/auth/login	            注册与登录
+STU-03	/api/student/books/search	        搜索图书
+STU-05	/api/student/loans	                借阅图书
+STU-02	/api/student/books/category	        浏览分类
+STU-04	/api/student/books/:id	            查看图书详情
+STU-07	/api/student/loans/me	            查看借阅记录
+STU-08	/api/student/fines/me	            查看罚款情况
+STU-09	/api/student/loans/:id/renew	    线上续借
+STU-10	/api/student/notifications	        接收到期通知
+STU-06	/api/student/holds	                预约图书
+LIB-01	/api/librarian/loans/checkout	    办理借书手续
+LIB-02	/api/librarian/loans/return	        办理还书/计罚
+LIB-03	/api/librarian/overdue	            查看逾期名单
+LIB-04	/api/librarian/notifications	    发送催还通知
+LIB-05	/api/librarian/holds	            管理预约请求
+ADM-01	/api/admin/users	                用户账号管理
+ADM-02	/api/admin/books	                图书信息管理
+ADM-03	/api/admin/roles	                角色权限分配
+ADM-04	/api/admin/config	                罚金率/借阅期配置
+ADM-05	/api/admin/audit-logs	            查看图书详情
