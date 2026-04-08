@@ -3,8 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
 
-require('dotenv').config();
-
 // 🚨 修改挂载路径（对齐 PM 规范）
 const userRoutes = require('./routes/users');
 const bookRoutes = require('./routes/books');
@@ -35,6 +33,12 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
+
+//调试信息
+// 调试：确认路由模块已加载
+console.log('✅ userRoutes loaded:', typeof userRoutes);
+console.log('✅ bookRoutes loaded:', typeof bookRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

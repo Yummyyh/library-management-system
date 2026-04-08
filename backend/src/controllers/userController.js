@@ -57,8 +57,8 @@ exports.listUsers = async (req, res, next) => {
     const take = parseInt(size);
 
     const where = {};
-    if (role) where.role = String(role).toUpperCase();
-    if (status) where.status = String(status).toUpperCase();
+    if (role) where.role = role;
+    if (status) where.status = status;
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
@@ -105,13 +105,6 @@ exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name, email, role, status } = req.body;
-
-    if (email !== undefined) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        return res.status(400).json(error('Invalid email format', 400));
-      }
-    }
 
     const user = await prisma.user.update({
       where: { id },
