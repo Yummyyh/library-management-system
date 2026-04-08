@@ -66,16 +66,19 @@ exports.createBook = async (req, res, next) => {
  */
 exports.listBooks = async (req, res, next) => {
   try {
-    const { page = 1, size = 10, keyword } = req.query;
+    const { page = 1, size = 10, keyword, genre } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(size);
     const take = parseInt(size);
 
     const where = { isDeleted: false }; // 默认不显示已删除图书
+    if (genre) {
+      where.genre = String(genre);
+    }
     if (keyword) {
       where.OR = [
-        { title: { contains: keyword } },
-        { author: { contains: keyword } },
-        { isbn: { contains: keyword } },
+        { title: { contains: String(keyword) } },
+        { author: { contains: String(keyword) } },
+        { isbn: { contains: String(keyword) } },
       ];
     }
 
