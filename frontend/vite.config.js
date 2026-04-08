@@ -1,14 +1,16 @@
 import path from "path"
-import react from "@vitejs/plugin-react"
+import { fileURLToPath } from "url"
+import { dirname } from "path"
 import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
 
-// https://vite.dev/config/
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // 这行代码是关键：它告诉 Vite 把 "@" 指向 "src" 文件夹
-      // 这样才能和你的 jsconfig.json 匹配上
       "@": path.resolve(__dirname, "./src"),
     },
   },
