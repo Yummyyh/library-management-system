@@ -6,6 +6,8 @@ const errorHandler = require('./middleware/errorHandler');
 // 🚨 修改挂载路径（对齐 PM 规范）
 const userRoutes = require('./routes/users');
 const bookRoutes = require('./routes/books');
+const studentAuthRoutes = require('./routes/studentAuth');
+const studentBookRoutes = require('./routes/studentBooks');
 
 const app = express();
 
@@ -21,6 +23,10 @@ app.get('/health', (req, res) => {
 // 🚨 新增：挂载路由（必须在 404 中间件之前），添加 /admin 前缀（对齐 PM 规范）
 app.use('/api/admin/users', userRoutes);   // → POST/GET/PUT/DELETE /api/users
 app.use('/api/admin/books', bookRoutes);   // → POST/GET/PUT/DELETE /api/books
+
+// Student-facing routes
+app.use('/api/student/auth', studentAuthRoutes);
+app.use('/api/student/books', studentBookRoutes);
 
 // 404 捕获中间件（必须在所有路由之后）
 app.use((req, res, next) => {
@@ -38,6 +44,8 @@ const PORT = process.env.PORT || 3001;
 // 调试：确认路由模块已加载
 console.log('✅ userRoutes loaded:', typeof userRoutes);
 console.log('✅ bookRoutes loaded:', typeof bookRoutes);
+console.log('✅ studentAuthRoutes loaded:', typeof studentAuthRoutes);
+console.log('✅ studentBookRoutes loaded:', typeof studentBookRoutes);
 
 
 app.listen(PORT, () => {

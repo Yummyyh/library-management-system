@@ -10,6 +10,11 @@ import './App.css'
 import UsersPage from './pages/admin/UsersPage'
 import BooksPage from './pages/admin/BooksPage'
 
+// ← Student pages
+import StudentRegisterPage from './pages/student/StudentRegisterPage'
+import StudentLoginPage from './pages/student/StudentLoginPage'
+import StudentBooksPage from './pages/student/StudentBooksPage'
+
 // ← 新增：导入 Toaster（用于 toast 提示）
 import { Toaster } from '@/components/ui/toaster'
 
@@ -69,6 +74,31 @@ function App() {
                 </ul>
               </div>
 
+              <div id="docs">
+                <svg className="icon" role="presentation" aria-hidden="true">
+                  <use href="/icons.svg#documentation-icon"></use>
+                </svg>
+                <h2>Student 学生端</h2>
+                <p>注册 / 登录 / 搜索借阅</p>
+                <ul>
+                  <li>
+                    <Link to="/student/register" className="text-blue-600 hover:underline">
+                      学生注册
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/student/login" className="text-blue-600 hover:underline">
+                      学生登录
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/student/books" className="text-blue-600 hover:underline">
+                      搜索与借阅
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
               {/* 原有文档链接保留 */}
               <div id="social">
                 <svg className="icon" role="presentation" aria-hidden="true">
@@ -95,6 +125,11 @@ function App() {
         {/* 🔐 Admin 路由 */}
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/books" element={<BooksPage />} />
+
+        {/* 🧑‍🎓 Student routes */}
+        <Route path="/student/register" element={<StudentRegisterPage />} />
+        <Route path="/student/login" element={<StudentLoginPage />} />
+        <Route path="/student/books" element={<StudentBooksPage />} />
       </Routes>
     </BrowserRouter>
   )
