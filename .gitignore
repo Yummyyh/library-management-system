@@ -1,0 +1,116 @@
+# 🗄 【关键】数据库文件（必须由 seed.js 重建，禁止提交）
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/prisma/*.db
+*.db
+*.sqlite
+*.sqlite3
+
+# 🔑 环境变量（敏感信息，禁止提交）
+.env
+.env.local
+.env.*.local
+!.env.example
+*.pem
+*.key
+*.cert
+
+# 📦 依赖目录（由 package-lock.json 锁定，禁止提交）
+node_modules/
+.pnpm-store/
+jspm_packages/
+web_modules/
+
+# 🏗 构建产物（由源码生成，禁止提交）
+dist/
+build/
+.vite/
+.next/
+.nuxt/
+out/
+.vuepress/dist/
+.svelte-kit/
+**/.vitepress/dist/
+.docusaurus/
+
+# 📊 测试与覆盖率报告
+coverage/
+*.lcov
+.nyc_output/
+*.tsbuildinfo
+
+# 📝 日志与缓存
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.cache/
+.parcel-cache/
+.fusebox/
+.dynamodb/
+.firebase/
+.serverless/
+
+# 🖥 系统文件（禁止提交）
+.DS_Store
+Thumbs.db
+desktop.ini
+*.pid
+*.seed
+*.pid.lock
+.lock-wscript
+report.*.json
+
+# 🛠 IDE/编辑器配置（个人偏好，禁止提交）
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+*.sublime-project
+*.sublime-workspace
+
+# 📦 包管理器缓存
+.npm/
+.eslintcache
+.stylelintcache
+.node_repl_history
+.yarn-integrity
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# 🧪 临时文件
+*.tmp
+*.temp
+*.tgz
+*.tar.gz
+*.zip
+*.rar
+
+# 🔧 框架特定缓存
+.grunt
+lib-cov
+bower_components/
+build/Release/
+.tern-port
+.vscode-test/
+
+# ⚡ Vite 特定时间戳文件
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# 📦 打包输出
+*.tgz
+*.tar.gz
+
+# 🗂 其他
+lerna-debug.log*

@@ -1,0 +1,46 @@
+const express = require('express');
+const cors = require('cors');
+const errorHandler = require('./middleware/errorHandler');
+
+// Route imports
+const userRoutes = require('./routes/users');
+const bookRoutes = require('./routes/books');
+const studentAuthRoutes = require('./routes/studentAuth');
+const studentBookRoutes = require('./routes/studentBooks');
+const librarianRoutes = require('./routes/librarian.routes');
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Library API is running' });
+});
+
+// 🔐 Admin routes
+app.use('/api/admin/users', userRoutes);
+
+// 🔐 Auth routes (unified)
+const adminAuthController = require('./controllers/adminAuthController');
+const librarianAuthController = require('./controllers/librarianAuthController');
+app.post('/api/admin/auth/login', adminAuthController.login);
+app.post('/api/librarian/auth/login', librarianAuthController.login);
+
+// 🔐 Librarian routes (including book management now)
+app.use('/api/librarian/books', bookRoutes);
+app.use('/api/librarian', librarianRoutes);
+
+// 🔐 Student routes
+app.use('/api/student/auth', studentAuthRoutes);
+app.use('/api/student/books', studentBookRoutes);
+
+// 404 & error handler
+app.use((req, res, next) => {
+  const err = new Error('Not Found');
+  err.statusCode = 404;
+  next(err);
+});
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

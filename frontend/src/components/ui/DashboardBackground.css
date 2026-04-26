@@ -1,0 +1,329 @@
+/* frontend/src/components/DashboardBackground.css */
+.dashboard-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 0;
+  }
+  
+  /* ========== 学生背景 ========== */
+  .student-bg {
+    background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 50%, #fef3c7 100%);
+  }
+  
+  .student-bg .bg-shapes {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .books-stack-1 {
+    position: absolute;
+    right: 10%;
+    top: 20%;
+    transform: rotate(15deg);
+    opacity: 0.1;
+  }
+  
+  .book-shape {
+    width: 80px;
+    height: 100px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    margin: 5px 0;
+    border-radius: 4px;
+    animation: bookFloat 6s ease-in-out infinite;
+  }
+  
+  .book-shape:nth-child(2) {
+    margin-left: 10px;
+    animation-delay: 0.5s;
+  }
+  
+  .book-shape:nth-child(3) {
+    margin-left: -5px;
+    animation-delay: 1s;
+  }
+  
+  @keyframes bookFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  .graduation-cap {
+    position: absolute;
+    left: 5%;
+    bottom: 10%;
+    width: 120px;
+    height: 120px;
+    color: #3b82f6;
+    opacity: 0.15;
+    animation: rotate 20s linear infinite;
+  }
+  
+  .icon-shape svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .decorative-line {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #3b82f6, transparent);
+    opacity: 0.2;
+  }
+  
+  .line-1 {
+    width: 300px;
+    top: 30%;
+    left: -10%;
+    animation: slideRight 15s ease-in-out infinite;
+  }
+  
+  .line-2 {
+    width: 200px;
+    bottom: 20%;
+    right: -5%;
+    animation: slideLeft 18s ease-in-out infinite;
+  }
+  
+  @keyframes slideRight {
+    0%, 100% { transform: translateX(0); opacity: 0; }
+    50% { opacity: 0.3; }
+    100% { transform: translateX(100vw); opacity: 0; }
+  }
+  
+  @keyframes slideLeft {
+    0%, 100% { transform: translateX(0); opacity: 0; }
+    50% { opacity: 0.3; }
+    100% { transform: translateX(-100vw); opacity: 0; }
+  }
+  
+  .dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #3b82f6;
+    border-radius: 50%;
+    opacity: 0.2;
+    animation: dotPulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 0.2; }
+    50% { transform: scale(1.5); opacity: 0.4; }
+  }
+  
+  /* ========== 管理员背景 ========== */
+  .admin-bg {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+  }
+  
+  .admin-crown {
+    position: absolute;
+    top: 10%;
+    right: 10%;
+    width: 100px;
+    height: 100px;
+    color: #f59e0b;
+    opacity: 0.2;
+    animation: crownFloat 8s ease-in-out infinite;
+  }
+  
+  @keyframes crownFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+  
+  .users-group {
+    position: absolute;
+    left: 5%;
+    top: 15%;
+    opacity: 0.15;
+  }
+  
+  .user-circle {
+    width: 60px;
+    height: 60px;
+    background: #f59e0b;
+    border-radius: 50%;
+    margin: 10px;
+    display: inline-block;
+    animation: userBounce 3s ease-in-out infinite;
+  }
+  
+  .user-circle:nth-child(2) {
+    animation-delay: 0.3s;
+    margin-left: -20px;
+  }
+  
+  .user-circle:nth-child(3) {
+    animation-delay: 0.6s;
+    margin-left: -20px;
+  }
+  
+  @keyframes userBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+  
+  .geometric-shape {
+    position: absolute;
+    opacity: 0.1;
+  }
+  
+  .square-1 {
+    width: 80px;
+    height: 80px;
+    background: #f59e0b;
+    top: 40%;
+    right: 20%;
+    animation: rotate 12s linear infinite;
+  }
+  
+  .circle-1 {
+    width: 60px;
+    height: 60px;
+    background: #f59e0b;
+    border-radius: 50%;
+    bottom: 20%;
+    left: 15%;
+    animation: pulse 6s ease-in-out infinite;
+  }
+  
+  .triangle-1 {
+    width: 0;
+    height: 0;
+    border-left: 40px solid transparent;
+    border-right: 40px solid transparent;
+    border-bottom: 70px solid #f59e0b;
+    top: 60%;
+    left: 50%;
+    animation: triangleSpin 10s linear infinite;
+  }
+  
+  @keyframes triangleSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .grid-pattern {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      linear-gradient(rgba(245, 158, 11, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(245, 158, 11, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+  
+  /* ========== 馆员背景 ========== */
+  .librarian-bg {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
+  }
+  
+  .library-building {
+    position: absolute;
+    top: 15%;
+    left: 8%;
+    width: 110px;
+    height: 110px;
+    color: #10b981;
+    opacity: 0.2;
+    animation: buildingGrow 10s ease-in-out infinite;
+  }
+  
+  @keyframes buildingGrow {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+  
+  .bookshelf {
+    position: absolute;
+    right: 8%;
+    bottom: 15%;
+    opacity: 0.15;
+  }
+  
+  .shelf {
+    width: 120px;
+    height: 8px;
+    background: #10b981;
+    margin: 20px 0;
+    border-radius: 4px;
+    position: relative;
+  }
+  
+  .shelf::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 10px;
+    width: 15px;
+    height: 20px;
+    background: #10b981;
+    border-radius: 2px;
+  }
+  
+  .shelf::after {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 35px;
+    width: 15px;
+    height: 25px;
+    background: #10b981;
+    border-radius: 2px;
+  }
+  
+  .shelf:nth-child(2)::before { left: 50px; }
+  .shelf:nth-child(2)::after { left: 75px; }
+  .shelf:nth-child(3)::before { left: 20px; }
+  .shelf:nth-child(3)::after { left: 60px; }
+  
+  .wave {
+    position: absolute;
+    width: 200%;
+    height: 200px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+    animation: waveMove 15s ease-in-out infinite;
+  }
+  
+  .wave-1 {
+    bottom: -100px;
+    left: -50%;
+  }
+  
+  .wave-2 {
+    bottom: -50px;
+    left: 0;
+    animation-delay: 5s;
+  }
+  
+  @keyframes waveMove {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-25%); }
+  }
+  
+  .floating-element {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    background: #10b981;
+    border-radius: 50%;
+    opacity: 0.2;
+    animation: elementFloat 8s ease-in-out infinite;
+  }
+  
+  @keyframes elementFloat {
+    0%, 100% { transform: translateY(0px); opacity: 0.2; }
+    50% { transform: translateY(-30px); opacity: 0.4; }
+  }

@@ -1,0 +1,190 @@
+// 数据源和生成器设置
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ⚠️ 注意：SQLite 对 Enum 支持有限，改用 String + 注释方式
+// 原 Enum 定义已移除，取值通过应用层校验
+
+// 用户表：保存用户信息
+model User {
+  /// 主键
+  id          String   @id @default(cuid())
+  /// 用户名
+  name        String
+  /// 邮箱，唯一
+  email       String   @unique
+  /// 密码哈希
+  passwordHash String
+  /// 学号，唯一
+  studentId   String   @unique
+  /// 角色：取值 "STUDENT" | "LIBRARIAN" | "ADMIN"
+  role        String
+  /// 状态：取值 "ACTIVE" | "DEACTIVATED"
+  status       String   @default("ACTIVE") // ← 新增：ACTIVE / DEACTIVATED
+  /// 创建时间
+  createdAt   DateTime @default(now())
+
+  /// 更新时间
+  updatedAt    DateTime @updatedAt          // ← 新增
+
+  // 关系
+  loans       Loan[]
+  ratings     Rating[]
+  holds       Hold[]
+  wishlists   Wishlist[]
+  auditLogs   AuditLog[]
+}
+
+// 图书表：保存书籍信息
+model Book {
+  /// 主键
+  id            String   @id @default(cuid())
+  /// 标题
+  title         String
+  /// 作者
+  author        String
+  /// ISBN，唯一
+  isbn          String   @unique
+  /// 类型/类别
+  genre         String
+  /// 描述
+  description   String
+  /// 语言
+  language      String
+  /// 书架位置
+  shelfLocation String
+  /// 库存数量
+  stock         Int      @default(1)          // ← 替换 available (Boolean -> Int)
+  /// 是否删除
+  isDeleted     Boolean  @default(false)      // ← 新增：软删除标记
+  /// 分类
+  category      String?                       // ← 新增：可选分类
+  /// 创建时间
+  createdAt     DateTime @default(now())
+  /// 更新时间
+  updatedAt     DateTime @updatedAt           // ← 新增
+  // 关系
+  loans       Loan[]
+  ratings     Rating[]
+  holds       Hold[]
+  wishlists   Wishlist[]
+}
+
+// 借阅记录表：记录图书借阅历史
+model Loan {
+  /// 主键
+  id           String   @id @default(cuid())
+  /// 关联图书ID
+  bookId       String
+  /// 关联用户ID
+  userId       String
+  /// 借出日期
+  checkoutDate DateTime
+  /// 到期日期
+  dueDate      DateTime
+  /// 归还日期，允许为空
+  returnDate   DateTime?
+  /// 罚金金额
+  fineAmount   Float
+  /// 罚金已支付
+  finePaid     Boolean
+  /// 罚金已豁免
+  fineForgiven Boolean
+  /// 创建时间
+  createdAt    DateTime @default(now())
+
+  // 关系
+  book         Book     @relation(fields: [bookId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+// 评分表：用户对图书的评分
+model Rating {
+  /// 主键
+  id        String   @id @default(cuid())
+  /// 关联图书ID
+  bookId    String
+  /// 关联用户ID
+  userId    String
+  /// 评分（1-5星）
+  stars     Int
+  /// 创建时间
+  createdAt DateTime @default(now())
+
+  // 关系
+  book      Book     @relation(fields: [bookId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([bookId, userId]) /// 同一用户对同一本书只能评分一次
+}
+
+// 预约表：用于排队借阅未上架图书
+model Hold {
+  /// 主键
+  id        String   @id @default(cuid())
+  /// 关联图书ID
+  bookId    String
+  /// 关联用户ID
+  userId    String
+  /// 状态：取值 "WAITING" | "READY" | "CANCELLED"
+  status    String
+  /// 创建时间
+  createdAt DateTime @default(now())
+
+  // 关系
+  book      Book     @relation(fields: [bookId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// 心愿单表：用户希望借阅的图书
+model Wishlist {
+  /// 主键
+  id        String   @id @default(cuid())
+  /// 关联图书ID
+  bookId    String
+  /// 关联用户ID
+  userId    String
+  /// 创建时间
+  createdAt DateTime @default(now())
+
+  // 关系
+  book      Book     @relation(fields: [bookId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// 配置表：存放全局配置项（如系统参数）
+model Config {
+  /// 主键
+  id     String @id @default(cuid())
+  /// 键，唯一
+  key    String @unique
+  /// 值
+  value  String
+}
+
+// 审计日志表：记录操作日志
+model AuditLog {
+  /// 主键
+  id        String   @id @default(cuid())
+  /// 操作用户ID，可为空
+  userId    String?
+  /// 操作动作
+  action    String
+  /// 操作实体
+  entity    String
+  /// 实体ID
+  entityId  String
+  /// 详细内容
+  detail    String
+  /// 创建时间
+  createdAt DateTime @default(now())
+
+  // 关系
+  user      User?    @relation(fields: [userId], references: [id])
+}
