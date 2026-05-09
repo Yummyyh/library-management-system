@@ -18,6 +18,7 @@ export default function StudentBooksPage() {
   const [borrowingId, setBorrowingId] = useState(null);
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
+  const [expandedBookId, setExpandedBookId] = useState(null);
 
   useEffect(() => {
     if (!studentSession.getToken()) {
@@ -49,12 +50,21 @@ export default function StudentBooksPage() {
       setBorrowingId(book.id);
       await studentBookAPI.borrow(book.id);
       toast({ title: 'Borrowed Successfully', description: `You borrowed "${book.title}"` });
+      
+      // ✅ 修复：同时更新 stock 和 availableCount，确保兼容
       setResults((prev) =>
-        prev.map((b) =>
-          b.id === book.id
-            ? { ...b, stock: Math.max(0, (b.stock ?? 0) - 1), availability: (b.stock ?? 0) - 1 > 0 ? 'available' : 'borrowed' }
-            : b
-        )
+        prev.map((b) => {
+          if (b.id === book.id) {
+            const newCount = Math.max(0, (b.availableCount ?? b.stock ?? 0) - 1);
+            return {
+              ...b,
+              availableCount: newCount,
+              stock: newCount,
+              availability: newCount > 0 ? 'available' : 'borrowed'
+            };
+          }
+          return b;
+        })
       );
     } catch (err) {
       if (String(err.message).toLowerCase().includes('unauthorized')) {
@@ -83,20 +93,14 @@ export default function StudentBooksPage() {
             {student ? `Current Student: ${student.name} (${student.studentId})` : 'Please login first'}
           </p>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          🚪 Logout
-        </Button>
+        <Button variant="outline" onClick={handleLogout}>🚪 Logout</Button>
       </div>
+
       <form onSubmit={doSearch} className="flex gap-2 max-w-2xl">
-        <Input
-          placeholder="Enter Title / Author / ISBN..."
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Searching...' : 'Search'}
-        </Button>
+        <Input placeholder="Enter Title / Author / ISBN..." value={q} onChange={(e) => setQ(e.target.value)} />
+        <Button type="submit" disabled={loading}>{loading ? 'Searching...' : 'Search'}</Button>
       </form>
+
       <div className="border rounded-lg">
         <Table>
           <TableHeader>
@@ -110,27 +114,56 @@ export default function StudentBooksPage() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">Loading...</TableCell>
-              </TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-8">Loading...</TableCell></TableRow>
             ) : (results?.length || 0) === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
-                  {searched ? 'No results found' : 'Enter keyword to start searching'}
-                </TableCell>
-              </TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center py-8">{searched ? 'No results found' : 'Enter keyword to start searching'}</TableCell></TableRow>
             ) : (
               results.map((b) => {
-                const available = (b.stock ?? 0) > 0;
+                // ✅ 修复：同时检查 availableCount 和 stock
+                const available = (b.availableCount ?? b.stock ?? 0) > 0;
+                const isExpanded = expandedBookId === b.id;
+                
                 return (
                   <TableRow key={b.id}>
                     <TableCell className="font-medium">{b.title}</TableCell>
                     <TableCell>{b.author}</TableCell>
-                    <TableCell className="text-xs">{b.isbn}</TableCell>
+                    <TableCell className="text-xs font-mono">{b.isbn}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs ${available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                        {available ? 'Available' : 'Borrowed'}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`px-2 py-1 rounded text-xs w-fit ${
+                          available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                        }`}>
+                          {available ? `Available (${b.availableCount ?? b.stock ?? 0})` : 'Borrowed'}
+                        </span>
+                        {b.barcodes?.length > 0 && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-auto p-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-transparent"
+                            onClick={() => setExpandedBookId(isExpanded ? null : b.id)}
+                          >
+                            {isExpanded ? '🔼 Hide Barcodes' : `🔍 View Barcodes (${b.barcodes.length})`}
+                          </Button>
+                        )}
+                        {isExpanded && (
+                          <div className="mt-2 p-2 bg-gray-50 rounded text-xs space-y-1 max-w-[200px]">
+                            {b.barcodes.map((bc) => (
+                              <div key={bc.barcode} className="flex justify-between items-center gap-2">
+                                <span className="font-mono truncate" title={bc.barcode}>
+                                  {bc.barcode}
+                                </span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] whitespace-nowrap ${
+                                  bc.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : 
+                                  bc.status === 'BORROWED' ? 'bg-orange-100 text-orange-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}>
+                                  {bc.status}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button

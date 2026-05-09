@@ -1,49 +1,68 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const roleAuth = require('../middleware/roleAuth');
-// 🔹 [P1] 修改：引入统一响应工具
 const { success, error } = require('../utils/response');
-
 const prisma = new PrismaClient();
 const router = express.Router();
 
-// 🔹 [P0] 修改：为学生列表接口添加 LIBRARIAN 鉴权
+// 🔹 获取学生列表（供借书时下拉选择）
 router.get('/students', roleAuth('LIBRARIAN'), async (req, res, next) => {
   try {
     const students = await prisma.user.findMany({
       where: { role: 'STUDENT' },
       select: { id: true, name: true, studentId: true, role: true }
     });
-    // 🔹 [P1] 修改：使用统一 success 格式
     res.json(success(students, 'Students retrieved'));
   } catch (err) {
     next(err);
   }
 });
 
+// 🔹 借书接口 /checkout
+// ✅ 修复：参数校验前置，事务内只写数据，移除 res 调用
 router.post('/checkout', roleAuth('LIBRARIAN'), async (req, res, next) => {
   try {
-    const { isbn, studentId, dueDate } = req.body;
+    const { barcode, studentId, dueDate } = req.body;
+
+    // 1. 参数显式拦截，防止空值触发 Prisma 500 异常
+    if (!barcode || String(barcode).trim() === '') {
+      return res.status(400).json(error('Barcode is required', 400));
+    }
+    if (!studentId || String(studentId).trim() === '') {
+      return res.status(400).json(error('Student ID is required', 400));
+    }
+    if (!dueDate) {
+      return res.status(400).json(error('Due date is required', 400));
+    }
+
+    // 2. 日期格式校验
     const due = new Date(dueDate);
     if (isNaN(due.getTime()) || due <= new Date()) {
       return res.status(400).json(error('Invalid due date', 400));
     }
 
-    // 🔹 [P3] 修改：使用 Prisma 事务保证原子性，防并发超卖
+    // 3. 状态校验（事务外执行只读查询）
+    const bc = await prisma.barcode.findUnique({ where: { barcode }, include: { book: true } });
+    
+    // ✅ 修复：拦截已软删除的图书
+    if (!bc || bc.book.isDeleted) {
+      return res.status(404).json(error('Book not found or removed from catalog', 404));
+    }
+    if (bc.status !== 'AVAILABLE') {
+      return res.status(409).json(error('Book not available', 409));
+    }
+
+    const user = await prisma.user.findUnique({ where: { studentId } });
+    if (!user || user.role !== 'STUDENT' || user.status !== 'ACTIVE') {
+      return res.status(400).json(error('Invalid student account', 400));
+    }
+
+    // 4. 事务内仅执行写操作
     const result = await prisma.$transaction(async (tx) => {
-      const book = await tx.book.findUnique({ where: { isbn } });
-      if (!book || book.isDeleted || book.stock <= 0) {
-        throw new Error('Book not available');
-      }
-
-      const user = await tx.user.findUnique({ where: { studentId } });
-      if (!user || user.role !== 'STUDENT' || user.status !== 'ACTIVE') {
-        throw new Error('Invalid student account');
-      }
-
+      await tx.barcode.update({ where: { id: bc.id }, data: { status: 'BORROWED' } });
       const loan = await tx.loan.create({
         data: {
-          bookId: book.id,
+          barcodeId: bc.id, // 关联具体条形码 ID
           userId: user.id,
           checkoutDate: new Date(),
           dueDate: due,
@@ -53,42 +72,55 @@ router.post('/checkout', roleAuth('LIBRARIAN'), async (req, res, next) => {
           fineForgiven: false,
         },
       });
-
-      await tx.book.update({
-        where: { id: book.id },
-        data: { stock: { decrement: 1 } },
-      });
-
-      return { loanId: loan.id, studentName: user.name, bookTitle: book.title };
+      return { 
+        loanId: loan.id, 
+        studentName: user.name, 
+        bookTitle: bc.book.title, 
+        barcode: bc.barcode 
+      };
     });
 
-    // 🔹 [P1] 修改：统一返回格式
+    // 5. 成功响应（无条件返回）
     res.json(success(result, 'Checkout successful'));
   } catch (err) {
+    // 兼容带 statusCode 的错误
+    if (err.statusCode) {
+      return res.status(err.statusCode).json(error(err.message, err.statusCode));
+    }
     next(err);
   }
 });
 
+// 🔹 还书接口 /return
+// ✅ 修复：查询也放入事务中，保证原子性
 router.post('/return', roleAuth('LIBRARIAN'), async (req, res, next) => {
   try {
-    const { isbn, studentId } = req.body;
-    const user = await prisma.user.findUnique({ where: { studentId } });
-    const book = await prisma.book.findUnique({ where: { isbn } });
+    const { barcode } = req.body;
+    if (!barcode || String(barcode).trim() === '') {
+      return res.status(400).json(error('Barcode is required', 400));
+    }
 
-    if (!user || !book) return res.status(400).json(error('Student or Book not found', 400));
+    const result = await prisma.$transaction(async (tx) => {
+      const bc = await tx.barcode.findUnique({ where: { barcode }, include: { book: true } });
+      if (!bc) throw Object.assign(new Error('Barcode not found'), { statusCode: 400 });
 
-    const loan = await prisma.loan.findFirst({
-      where: { bookId: book.id, userId: user.id, returnDate: null },
-    });
-    if (!loan) return res.status(400).json(error('No active loan found', 400));
+      // 查找该书码对应的未还借阅记录
+      const loan = await tx.loan.findFirst({ where: { barcodeId: bc.id, returnDate: null } });
+      if (!loan) throw Object.assign(new Error('No active loan found for this barcode'), { statusCode: 400 });
 
-    await prisma.$transaction(async (tx) => {
+      // 更新借阅记录
       await tx.loan.update({ where: { id: loan.id }, data: { returnDate: new Date() } });
-      await tx.book.update({ where: { id: book.id }, data: { stock: { increment: 1 } } });
+      // 恢复条形码状态
+      await tx.barcode.update({ where: { id: bc.id }, data: { status: 'AVAILABLE' } });
+      
+      return { barcode, bookTitle: bc.book.title };
     });
 
-    res.json(success({}, 'Return successful'));
+    res.json(success(result, 'Return successful'));
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json(error(err.message, err.statusCode));
+    }
     next(err);
   }
 });

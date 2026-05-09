@@ -1,22 +1,16 @@
+// backend/src/controllers/studentBookController.js
 const { PrismaClient } = require('@prisma/client');
 const { success, error } = require('../utils/response');
-
 const prisma = new PrismaClient();
 
-function toAvailability(stock) {
-  return stock > 0 ? 'available' : 'borrowed';
-}
-
 /**
- * Book search (title/author/ISBN).
- * - Query param: q
- * - Returns key fields + availability
+ * 1. 图书搜索 (Search)
+ * 验收标准：关键词搜索、隐藏已删除、返回 availableCount + barcodes + 兼容 stock
  */
 exports.search = async (req, res, next) => {
   try {
     const q = String(req.query.q || '').trim();
     if (!q) {
-      // Keeping this strict to satisfy "student can enter ... to search".
       return res.status(400).json(error('Search keyword (q) is required', 400));
     }
 
@@ -32,18 +26,37 @@ exports.search = async (req, res, next) => {
     const books = await prisma.book.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, author: true, isbn: true, stock: true },
+      select: {
+        id: true,
+        title: true,
+        author: true,
+        isbn: true,
+        // ✅ 返回条形码数组（含状态），供前端"查看条形码"功能使用
+        barcodes: {
+          select: {
+            barcode: true,
+            status: true,
+          },
+        },
+      },
       take: 50,
     });
 
-    const list = books.map((b) => ({
-      id: b.id,
-      title: b.title,
-      author: b.author,
-      isbn: b.isbn,
-      stock: b.stock,
-      availability: toAvailability(b.stock),
-    }));
+    const list = books.map((b) => {
+      // 计算可用数量
+      const availableCount = b.barcodes?.filter(bc => bc.status === 'AVAILABLE').length ?? 0;
+      
+      return {
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        isbn: b.isbn,
+        availableCount,           // ✅ 新字段：可用数
+        stock: availableCount,    // ✅ 兼容旧字段：防止前端乐观更新报错
+        availability: availableCount > 0 ? 'available' : 'borrowed',
+        barcodes: b.barcodes || [], // ✅ 返回条形码详情（确保非 undefined）
+      };
+    });
 
     return res.json(success({ list }, 'Books retrieved'));
   } catch (e) {
@@ -52,70 +65,86 @@ exports.search = async (req, res, next) => {
 };
 
 /**
- * Borrow a book.
- * - Requires student auth
- * - Decrements stock and creates a Loan record atomically
+ * 2. 学生借书 (Borrow)
+ * 验收标准：按 bookId 自动分配首个 AVAILABLE 的 Barcode，事务内完成，错误码规范化
  */
 exports.borrow = async (req, res, next) => {
   try {
     const bookId = req.params.id;
-    const studentId = req.student.id;
+    const studentId = req.student.id; // 从中间件获取当前登录学生 ID
 
     const result = await prisma.$transaction(async (tx) => {
+      // 1. 查书目是否存在且未删除
       const book = await tx.book.findUnique({
         where: { id: bookId },
-        select: { id: true, title: true, isDeleted: true, stock: true },
+        select: { id: true, title: true, isDeleted: true },
       });
 
       if (!book || book.isDeleted) {
-        const err = new Error('Book not found');
+        const err = new Error('Book not found or removed from catalog');
         err.statusCode = 404;
         throw err;
       }
 
-      if (book.stock <= 0) {
-        const err = new Error('Book is already borrowed');
+      // 2. 查找该书名下第一个状态为 AVAILABLE 的 Barcode
+      const barcode = await tx.barcode.findFirst({
+        where: {
+          bookId: book.id,
+          status: 'AVAILABLE',
+        },
+        select: { id: true, barcode: true },
+      });
+
+      if (!barcode) {
+        const err = new Error('No available copy for this book');
         err.statusCode = 409;
         throw err;
       }
 
-      const now = new Date();
-      const due = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-
-      await tx.book.update({
-        where: { id: bookId },
-        data: { stock: { decrement: 1 } },
+      // 3. 更新 Barcode 状态为 BORROWED
+      await tx.barcode.update({
+        where: { id: barcode.id },
+        data: { status: 'BORROWED' },
       });
+
+      // 4. 创建借阅记录（关联 barcodeId）
+      const now = new Date();
+      const dueDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 默认借期 14 天
 
       const loan = await tx.loan.create({
         data: {
-          bookId,
+          barcodeId: barcode.id, // ✅ 精准绑定物理册
           userId: studentId,
           checkoutDate: now,
-          dueDate: due,
+          dueDate: dueDate,
           returnDate: null,
           fineAmount: 0,
           finePaid: false,
           fineForgiven: false,
         },
-        select: { id: true, checkoutDate: true, dueDate: true },
       });
 
-      return { bookTitle: book.title, loan };
+      return {
+        bookTitle: book.title,
+        loanId: loan.id,
+        barcode: barcode.barcode,
+      };
     });
 
     return res.json(
       success(
-        { bookTitle: result.bookTitle, loan: result.loan },
+        {
+          bookTitle: result.bookTitle,
+          loan: { id: result.loanId, barcode: result.barcode },
+        },
         'Borrow successful'
       )
     );
   } catch (e) {
-    // Convert "stock already 0" into a clean API error.
+    // 处理自定义错误码（404/409）
     if (e.statusCode) {
       return res.status(e.statusCode).json(error(e.message, e.statusCode));
     }
     next(e);
   }
 };
-

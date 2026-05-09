@@ -10,30 +10,29 @@ import { librarianAPI } from '@/lib/api';
 export default function BorrowBook() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [isbn, setIsbn] = useState('');
+  // ✅ 字段名 isbn → barcode
+  const [barcode, setBarcode] = useState('');
   const [studentId, setStudentId] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // 🔹 [P1] 修改：使用统一 API 拉取学生列表
     librarianAPI.students()
       .then(data => setStudents(data || []))
-      .catch(err => toast({ variant: 'destructive', title: 'Failed to load student list', description: err.message }));
+      .catch(err => toast({ variant: 'destructive', title: 'Failed to load', description: err.message }));
   }, [toast]);
 
   const borrowBook = async () => {
-    if (!isbn || !studentId || !dueDate) {
-      toast({ variant: 'destructive', title: 'Validation Failed', description: 'Please fill in all fields' });
-      return;
+    if (!barcode || !studentId || !dueDate) {
+      return toast({ variant: 'destructive', title: 'Validation Failed', description: 'Please fill in all fields' });
     }
     try {
       setLoading(true);
-      // 🔹 [P1] 修改：使用统一 API 发起借书请求
-      const res = await librarianAPI.checkout({ isbn, studentId, dueDate });
-      toast({ title: '✅ Borrow Successful', description: res ? 'Checkout completed' : 'Success' });
-      setIsbn(''); setStudentId(''); setDueDate('');
+      // ✅ API 传参同步改为 barcode
+      await librarianAPI.checkout({ barcode, studentId, dueDate });
+      toast({ title: '✅ Borrow Successful', description: 'Checkout completed' });
+      setBarcode(''); setStudentId(''); setDueDate('');
     } catch (err) {
       toast({ variant: 'destructive', title: 'Borrow Failed', description: err.message });
     } finally {
@@ -54,8 +53,9 @@ export default function BorrowBook() {
         <Button variant="outline" onClick={handleLogout}>🚪 Logout</Button>
       </div>
       <div className="grid gap-2">
-        <Label>Book ISBN *</Label>
-        <Input value={isbn} onChange={(e) => setIsbn(e.target.value)} placeholder="e.g., 9780132350884" />
+        <Label>Barcode *</Label>
+        {/* ✅ 占位符与状态变量已对齐 */}
+        <Input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="Scan or type: 9780132350884-001" />
       </div>
       <div className="grid gap-2">
         <Label>Student *</Label>
