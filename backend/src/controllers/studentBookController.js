@@ -225,3 +225,67 @@ exports.borrow = async (req, res, next) => {
     next(e);
   }
 };
+
+/**
+ * 3. 学生查看自己的借阅记录 (getMyLoans STU-07)
+ * 验收标准：返回书名、作者、借阅日期、应还日期、状态，支持已还/未还筛选
+ */
+exports.getMyLoans = async (req, res, next) => {
+  try {
+    const studentId = req.student.id; // 复用和 borrow 接口一样的登录学生 ID 获取方式
+    const status = req.query.status; // 支持按状态筛选（可选参数）
+
+    // 构建查询条件
+    const where = {
+      userId: studentId,
+    };
+    if (status === 'borrowed') {
+      where.returnDate = null; // 未还的记录
+    } else if (status === 'returned') {
+      where.returnDate = { not: null }; // 已还的记录
+    }
+
+    // 关联查询：借阅记录 → 图书册 → 图书信息
+    const loans = await prisma.loan.findMany({
+      where,
+      include: {
+        barcode: {
+          include: {
+            book: {
+              select: {
+                title: true,
+                author: true,
+                isbn: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        checkoutDate: 'desc', // 按借阅时间倒序，最新的在前
+      },
+    });
+
+    // 格式化返回数据，适配前端展示
+    const list = loans.map((loan) => {
+      const book = loan.barcode.book;
+      const isOverdue = loan.dueDate < new Date() && !loan.returnDate;
+
+      return {
+        loanId: loan.id,
+        bookTitle: book.title,
+        bookAuthor: book.author,
+        bookIsbn: book.isbn,
+        barcode: loan.barcode.barcode,
+        checkoutDate: loan.checkoutDate,
+        dueDate: loan.dueDate,
+        returnDate: loan.returnDate,
+        status: loan.returnDate ? 'returned' : (isOverdue ? 'overdue' : 'borrowed'),
+      };
+    });
+
+    return res.json(success({ list }, 'Loans retrieved'));
+  } catch (e) {
+    next(e);
+  }
+};

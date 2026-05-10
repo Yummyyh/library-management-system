@@ -15,5 +15,8 @@ router.get('/:id', studentBookController.getBookDetail);
 // POST /api/student/books/:id/borrow (requires student auth)
 router.post('/:id/borrow', studentAuth, studentBookController.borrow);
 
+// GET /api/student/books/my-loans — 查看我的借阅记录（需要登录）
+router.get('/my-loans', studentAuth, studentBookController.getMyLoans);
+
 module.exports = router;
 
