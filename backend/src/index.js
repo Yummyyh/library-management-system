@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
+const { startOverdueCheckScheduler } = require('./utils/scheduler');
 
 // Route imports
 const userRoutes = require('./routes/users');
@@ -9,6 +10,7 @@ const bookRoutes = require('./routes/books');
 const studentAuthRoutes = require('./routes/studentAuth');
 const studentBookRoutes = require('./routes/studentBooks');
 const dueNoticeRoutes = require('./routes/dueNotices');
+const notificationRoutes = require('./routes/notifications');
 const librarianRoutes = require('./routes/librarian.routes');
 const externalRoutes = require('./routes/external.routes'); // ✅ 新增：外部 API 路由
 const app = express();
@@ -37,6 +39,7 @@ app.use('/api/librarian', librarianRoutes);
 app.use('/api/student/auth', studentAuthRoutes);
 app.use('/api/student/books', studentBookRoutes);
 app.use('/api/student/due-notices', dueNoticeRoutes);
+app.use('/api/student/notifications', notificationRoutes);
 
 // 🔍 External API routes (ISBN Lookup, etc.) ✅ 新增
 app.use('/api/external', externalRoutes);
@@ -48,6 +51,9 @@ app.use((req, res, next) => {
   next(err);
 });
 app.use(errorHandler);
+
+// ⏰ 启动定时任务：每天凌晨4点检查逾期图书
+startOverdueCheckScheduler();
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

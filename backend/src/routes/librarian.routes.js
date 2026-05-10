@@ -125,4 +125,60 @@ router.post('/return', roleAuth('LIBRARIAN'), async (req, res, next) => {
   }
 });
 
+// 🔹 查看逾期名单 /overdue
+router.get('/overdue', roleAuth('LIBRARIAN'), async (req, res, next) => {
+  try {
+    const now = new Date();
+
+    // 查询所有未归还且已逾期的借阅记录
+    const overdueLoans = await prisma.loan.findMany({
+      where: {
+        returnDate: null,
+        dueDate: {
+          lt: now,  // dueDate < now
+        },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, studentId: true },
+        },
+        barcode: {
+          select: {
+            book: {
+              select: { id: true, title: true, author: true },
+            },
+          },
+        },
+      },
+      orderBy: {
+        dueDate: 'asc',
+      },
+    });
+
+    // 格式化输出
+    const list = overdueLoans.map((loan) => {
+      const overdueDay = Math.floor((now.getTime() - loan.dueDate.getTime()) / (1000 * 60 * 60 * 24));
+      return {
+        loanId: loan.id,
+        student: {
+          id: loan.user.id,
+          name: loan.user.name,
+          studentId: loan.user.studentId,
+        },
+        book: {
+          id: loan.barcode.book.id,
+          title: loan.barcode.book.title,
+          author: loan.barcode.book.author,
+        },
+        dueDate: loan.dueDate,
+        overdueDay,
+      };
+    });
+
+    res.json(success({ list, total: list.length }, 'Overdue loans retrieved'));
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
