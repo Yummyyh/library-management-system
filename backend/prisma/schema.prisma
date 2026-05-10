@@ -65,6 +65,10 @@ model Book {
   shelfLocation String
   /// 分类（可选）
   category      String?
+  /// 出版社（可选，用于详情页）
+  publisher     String?
+  /// 出版日期（可选）
+  publishedAt   DateTime?
   /// 是否删除（软删除标记）
   isDeleted     Boolean   @default(false)
   /// 创建时间

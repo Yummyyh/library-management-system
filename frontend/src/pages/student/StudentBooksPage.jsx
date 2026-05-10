@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { studentBookAPI } from '@/lib/api';
 import { studentSession } from '@/lib/studentSession';
@@ -109,14 +109,15 @@ export default function StudentBooksPage() {
               <TableHead>Author</TableHead>
               <TableHead>ISBN</TableHead>
               <TableHead>Availability</TableHead>
+              <TableHead>Details</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8">Loading...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8">Loading...</TableCell></TableRow>
             ) : (results?.length || 0) === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8">{searched ? 'No results found' : 'Enter keyword to start searching'}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8">{searched ? 'No results found' : 'Enter keyword to start searching'}</TableCell></TableRow>
             ) : (
               results.map((b) => {
                 // ✅ 修复：同时检查 availableCount 和 stock
@@ -125,7 +126,11 @@ export default function StudentBooksPage() {
                 
                 return (
                   <TableRow key={b.id}>
-                    <TableCell className="font-medium">{b.title}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link className="text-primary hover:underline" to={`/student/books/${b.id}`}>
+                        {b.title}
+                      </Link>
+                    </TableCell>
                     <TableCell>{b.author}</TableCell>
                     <TableCell className="text-xs font-mono">{b.isbn}</TableCell>
                     <TableCell>
@@ -164,6 +169,11 @@ export default function StudentBooksPage() {
                           </div>
                         )}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button size="sm" variant="secondary" asChild>
+                        <Link to={`/student/books/${b.id}`}>View</Link>
+                      </Button>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button

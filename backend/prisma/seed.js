@@ -45,12 +45,12 @@ async function main() {
 
   // ================= 2. 创建图书与条形码（方案3核心逻辑） =================
   const bookSeeds = [
-    { title: "Clean Code: A Handbook of Agile Software Craftsmanship", author: "Robert C. Martin", isbn: "9780132350884", genre: "Technology", description: "Classic guide to writing clean, maintainable code.", language: "English", shelfLocation: "Tech-A1", category: "Software Engineering" },
-    { title: "The Pragmatic Programmer", author: "Andrew Hunt & David Thomas", isbn: "9780201616224", genre: "Technology", description: "Tips for software developers to improve daily work.", language: "English", shelfLocation: "Tech-A2", category: "Software Engineering" },
-    { title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084", genre: "Fiction", description: "Pulitzer Prize-winning novel of racial injustice.", language: "English", shelfLocation: "Fic-B1", category: "Classic" },
-    { title: "A Brief History of Time", author: "Stephen Hawking", isbn: "9780553380163", genre: "Science", description: "Cosmology for the masses, by a renowned physicist.", language: "English", shelfLocation: "Sci-C1", category: "Physics" },
-    { title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", isbn: "9780062316097", genre: "History", description: "The ascent of Homo sapiens.", language: "English", shelfLocation: "His-D2", category: "Anthropology" },
-    { title: "The Lean Startup", author: "Eric Ries", isbn: "9780307887894", genre: "Management", description: "How today's entrepreneurs use continuous innovation.", language: "English", shelfLocation: "Man-E1", category: "Business" },
+    { title: "Clean Code: A Handbook of Agile Software Craftsmanship", author: "Robert C. Martin", isbn: "9780132350884", genre: "Technology", description: "Classic guide to writing clean, maintainable code.", language: "English", shelfLocation: "Tech-A1", category: "Software Engineering", publisher: "Prentice Hall", publishedAt: new Date("2008-08-01") },
+    { title: "The Pragmatic Programmer", author: "Andrew Hunt & David Thomas", isbn: "9780201616224", genre: "Technology", description: "Tips for software developers to improve daily work.", language: "English", shelfLocation: "Tech-A2", category: "Software Engineering", publisher: "Addison-Wesley", publishedAt: new Date("1999-10-20") },
+    { title: "To Kill a Mockingbird", author: "Harper Lee", isbn: "9780061120084", genre: "Fiction", description: "Pulitzer Prize-winning novel of racial injustice.", language: "English", shelfLocation: "Fic-B1", category: "Classic", publisher: "Harper Perennial", publishedAt: new Date("2006-05-23") },
+    { title: "A Brief History of Time", author: "Stephen Hawking", isbn: "9780553380163", genre: "Science", description: "Cosmology for the masses, by a renowned physicist.", language: "English", shelfLocation: "Sci-C1", category: "Physics", publisher: "Bantam", publishedAt: new Date("1998-09-01") },
+    { title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", isbn: "9780062316097", genre: "History", description: "The ascent of Homo sapiens.", language: "English", shelfLocation: "His-D2", category: "Anthropology", publisher: "Harper", publishedAt: new Date("2015-02-10") },
+    { title: "The Lean Startup", author: "Eric Ries", isbn: "9780307887894", genre: "Management", description: "How today's entrepreneurs use continuous innovation.", language: "English", shelfLocation: "Man-E1", category: "Business", publisher: "Crown Business", publishedAt: new Date("2011-09-13") },
   ];
 
   for (const bookData of bookSeeds) {
@@ -63,7 +63,8 @@ async function main() {
       update: {
         title: bookData.title, author: bookData.author, genre: bookData.genre,
         description: bookData.description, language: bookData.language,
-        shelfLocation: bookData.shelfLocation, category: bookData.category, isDeleted: false,
+        shelfLocation: bookData.shelfLocation, category: bookData.category,
+        publisher: bookData.publisher, publishedAt: bookData.publishedAt, isDeleted: false,
       },
       create: { 
         ...bookData, 

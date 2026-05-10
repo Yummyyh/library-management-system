@@ -66,10 +66,21 @@ export const studentBookAPI = {
     const qs = new URLSearchParams({ q }).toString();
     return request(STUDENT_API_BASE, `/books/search?${qs}`);
   },
+  /** GET /api/student/books/:id — catalog book detail */
+  getById: (bookId) =>
+    request(STUDENT_API_BASE, `/books/${encodeURIComponent(bookId)}`),
   borrow: (bookId) => request(STUDENT_API_BASE, `/books/${bookId}/borrow`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
   }),
+};
+
+/** GET /api/librarian/books/:id — librarian book detail (auth required) */
+export const librarianBookAPI = {
+  getById: (bookId) =>
+    request(LIB_API_BASE, `/books/${encodeURIComponent(bookId)}`, {
+      headers: { Authorization: `Bearer ${getLibToken() || ''}` },
+    }),
 };
 
 // 📖 馆员 API

@@ -22,6 +22,7 @@ import LibrarianBooksPage from './pages/librarian/BooksPage' // 对应文件名 
 import StudentDashboard from './pages/student/StudentDashboard'
 import StudentBooksPage from './pages/student/StudentBooksPage'
 import StudentRegisterPage from './pages/student/StudentRegisterPage'
+import BookDetailPage from './pages/BookDetailPage'
 
 // UI 组件
 import { Toaster } from '@/components/ui/toaster'
@@ -90,6 +91,11 @@ function App() {
             <LibrarianBooksPage />
           </LibrarianGuard>
         } />
+        <Route path="/librarian/books/:bookId" element={
+          <LibrarianGuard>
+            <BookDetailPage />
+          </LibrarianGuard>
+        } />
 
         {/* 🎓 Student 路由 */}
         <Route path="/student" element={
@@ -100,6 +106,11 @@ function App() {
         <Route path="/student/books" element={
           <StudentGuard>
             <StudentBooksPage />
+          </StudentGuard>
+        } />
+        <Route path="/student/books/:bookId" element={
+          <StudentGuard>
+            <BookDetailPage />
           </StudentGuard>
         } />
 
