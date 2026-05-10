@@ -7,6 +7,7 @@ const userRoutes = require('./routes/users');
 const bookRoutes = require('./routes/books');
 const studentAuthRoutes = require('./routes/studentAuth');
 const studentBookRoutes = require('./routes/studentBooks');
+const dueNoticeRoutes = require('./routes/dueNotices');
 const librarianRoutes = require('./routes/librarian.routes');
 const app = express();
 app.use(cors());
@@ -31,6 +32,7 @@ app.use('/api/librarian', librarianRoutes);
 // 🔐 Student routes
 app.use('/api/student/auth', studentAuthRoutes);
 app.use('/api/student/books', studentBookRoutes);
+app.use('/api/student/due-notices', dueNoticeRoutes);
 
 // 404 & error handler
 app.use((req, res, next) => {
