@@ -1,3 +1,4 @@
+// backend/src/index.js
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
@@ -8,9 +9,12 @@ const bookRoutes = require('./routes/books');
 const studentAuthRoutes = require('./routes/studentAuth');
 const studentBookRoutes = require('./routes/studentBooks');
 const librarianRoutes = require('./routes/librarian.routes');
+const externalRoutes = require('./routes/external.routes'); // ✅ 新增：外部 API 路由
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Library API is running' });
 });
@@ -31,6 +35,9 @@ app.use('/api/librarian', librarianRoutes);
 // 🔐 Student routes
 app.use('/api/student/auth', studentAuthRoutes);
 app.use('/api/student/books', studentBookRoutes);
+
+// 🔍 External API routes (ISBN Lookup, etc.) ✅ 新增
+app.use('/api/external', externalRoutes);
 
 // 404 & error handler
 app.use((req, res, next) => {
