@@ -1,0 +1,9 @@
+
+POST http://localhost:3001/api/admin/librarian/checkout
+Content-Type: application/json
+
+{
+  "bookId": "cmnt7e3da0004r9tacix3j6hc",
+  "userId": "cmnt7e3d30002r9tamzpu2gl7",
+  "dueDate": "2026-05-20"
+}
