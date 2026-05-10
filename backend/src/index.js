@@ -8,6 +8,7 @@ const userRoutes = require('./routes/users');
 const bookRoutes = require('./routes/books');
 const studentAuthRoutes = require('./routes/studentAuth');
 const studentBookRoutes = require('./routes/studentBooks');
+const dueNoticeRoutes = require('./routes/dueNotices');
 const librarianRoutes = require('./routes/librarian.routes');
 const externalRoutes = require('./routes/external.routes'); // ✅ 新增：外部 API 路由
 const app = express();
@@ -35,6 +36,7 @@ app.use('/api/librarian', librarianRoutes);
 // 🔐 Student routes
 app.use('/api/student/auth', studentAuthRoutes);
 app.use('/api/student/books', studentBookRoutes);
+app.use('/api/student/due-notices', dueNoticeRoutes);
 
 // 🔍 External API routes (ISBN Lookup, etc.) ✅ 新增
 app.use('/api/external', externalRoutes);
