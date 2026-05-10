@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -278,18 +278,23 @@ export default function LibrarianBooksPage() {
               <TableHead>ISBN</TableHead>
               <TableHead>Genre</TableHead>
               <TableHead>Available</TableHead>
+              <TableHead>Details</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8">Loading...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8">Loading...</TableCell></TableRow>
             ) : books.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8">{keyword ? 'No results' : 'No books yet'}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={7} className="text-center py-8">{keyword ? 'No results' : 'No books yet'}</TableCell></TableRow>
             ) : (
               books.map((book) => (
                 <TableRow key={book.id}>
-                  <TableCell className="font-medium">{book.title}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link className="text-primary hover:underline" to={`/librarian/books/${book.id}`}>
+                      {book.title}
+                    </Link>
+                  </TableCell>
                   <TableCell>{book.author}</TableCell>
                   <TableCell className="text-xs">{book.isbn}</TableCell>
                   <TableCell>
@@ -299,6 +304,11 @@ export default function LibrarianBooksPage() {
                     <span className={`font-bold ${(book.availableCount ?? 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
                       {book.availableCount ?? 0}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="secondary" asChild>
+                      <Link to={`/librarian/books/${book.id}`}>View</Link>
+                    </Button>
                   </TableCell>
                   <TableCell className="space-x-2">
                     {/* ✅ New Button: View Barcodes */}

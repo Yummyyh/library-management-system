@@ -1,6 +1,7 @@
 // backend/src/controllers/studentBookController.js
 const { PrismaClient } = require('@prisma/client');
 const { success, error } = require('../utils/response');
+const { toBookDetailPayload } = require('../utils/bookDetail');
 const prisma = new PrismaClient();
 
 /** 书目查询字段（与搜索/浏览共用） */
@@ -108,6 +109,33 @@ exports.search = async (req, res, next) => {
     const list = books.map(toBookListItem);
 
     return res.json(success({ list }, 'Books retrieved'));
+  } catch (e) {
+    next(e);
+  }
+};
+
+/**
+ * 1b. 图书详情 (Read/One) — 与馆员端结构一致，供学生目录详情页使用
+ * GET /api/student/books/:id
+ */
+exports.getBookDetail = async (req, res, next) => {
+  try {
+    const bookId = req.params.id && String(req.params.id).trim();
+    if (!bookId) {
+      return res.status(400).json(error('Book id is required', 400));
+    }
+
+    const book = await prisma.book.findUnique({
+      where: { id: bookId },
+      include: { barcodes: { orderBy: { barcode: 'asc' } } },
+    });
+
+    if (!book || book.isDeleted) {
+      return res.status(404).json(error('Book not found', 404));
+    }
+
+    const payload = toBookDetailPayload(book, { includeBarcodes: true });
+    return res.json(success(payload, 'Book retrieved'));
   } catch (e) {
     next(e);
   }

@@ -1,6 +1,7 @@
 // backend/src/controllers/bookController.js
 const { PrismaClient } = require('@prisma/client');
 const { success, error } = require('../utils/response');
+const { toBookDetailPayload } = require('../utils/bookDetail');
 const prisma = new PrismaClient();
 
 /**
@@ -20,6 +21,8 @@ exports.createBook = async (req, res, next) => {
       language = "English",
       shelfLocation = "Unassigned",
       category,
+      publisher,
+      publishedAt,
       copyCount = 1
     } = req.body;
 
@@ -29,6 +32,12 @@ exports.createBook = async (req, res, next) => {
     }
     if (copyCount < 1) {
       return res.status(400).json(error('Copy count must be at least 1', 400));
+    }
+
+    let publishedAtDate = null;
+    if (publishedAt) {
+      const d = new Date(publishedAt);
+      publishedAtDate = Number.isNaN(d.getTime()) ? null : d;
     }
 
     // ✅ 统一 ISBN 格式（移除连字符），与 seed/条形码前缀保持一致
@@ -49,7 +58,8 @@ exports.createBook = async (req, res, next) => {
           where: { id: existingBook.id },
           data: {
             title, author, genre, description, language,
-            shelfLocation, category, isDeleted: false
+            shelfLocation, category, publisher: publisher || null,
+            publishedAt: publishedAtDate, isDeleted: false
           }
         });
         
@@ -80,7 +90,9 @@ exports.createBook = async (req, res, next) => {
           title, author,
           isbn: isbnClean,  // ✅ 关键：存纯数字
           genre, description, language, shelfLocation,
-          category, isDeleted: false
+          category, publisher: publisher || null,
+          publishedAt: publishedAtDate,
+          isDeleted: false
         },
       });
 
@@ -145,25 +157,27 @@ exports.listBooks = async (req, res, next) => {
 
 /**
  * 3. 获取图书详情 (Read/One)
- * ✅ 修复：返回 barcodes 数组供前端"查看条形码"弹窗使用
+ * GET /api/librarian/books/:id — 统一详情结构 + 借阅状态 + 出版字段
  */
 exports.getBookById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const bookId = id && String(id).trim();
+    if (!bookId) {
+      return res.status(400).json(error('Book id is required', 400));
+    }
+
     const book = await prisma.book.findUnique({
-      where: { id },
-      include: { barcodes: true } // ✅ 关键：包含条形码数据
+      where: { id: bookId },
+      include: { barcodes: { orderBy: { barcode: 'asc' } } },
     });
 
     if (!book || book.isDeleted) {
       return res.status(404).json(error('Book not found', 404));
     }
 
-    // 计算可用数量
-    const availableCount = book.barcodes.filter(bc => bc.status === 'AVAILABLE').length;
-
-    // ✅ 修复：返回 barcodes 数组（不删除），供前端弹窗显示
-    res.json(success({ ...book, availableCount }));
+    const payload = toBookDetailPayload(book, { includeBarcodes: true });
+    res.json(success(payload, 'Book retrieved'));
   } catch (err) {
     next(err);
   }
@@ -176,18 +190,30 @@ exports.getBookById = async (req, res, next) => {
 exports.updateBook = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, author, category, genre, description, language, shelfLocation } = req.body;
+    const { title, author, category, genre, description, language, shelfLocation, publisher, publishedAt } = req.body;
+
+    let publishedAtDate = undefined;
+    if (publishedAt !== undefined) {
+      if (publishedAt === null || publishedAt === '') {
+        publishedAtDate = null;
+      } else {
+        const d = new Date(publishedAt);
+        publishedAtDate = Number.isNaN(d.getTime()) ? null : d;
+      }
+    }
 
     // ✅ 修复：移除 stock 更新逻辑，仅更新元数据字段
     const book = await prisma.book.update({
       where: { id },
       data: {
-        title, author, category, genre, description, language, shelfLocation
+        title, author, category, genre, description, language, shelfLocation,
+        ...(publisher !== undefined ? { publisher: publisher || null } : {}),
+        ...(publishedAt !== undefined ? { publishedAt: publishedAtDate } : {}),
         // ⚠️ 注意：ISBN 不允许更新（唯一约束），barcode 需单独管理
       },
     });
 
-    res.json(success({ updated: true }, 'Book updated'));
+    res.json(success({ updated: true, id: book.id }, 'Book updated'));
   } catch (err) {
     next(err);
   }
