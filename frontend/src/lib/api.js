@@ -62,6 +62,15 @@ export const studentAuthAPI = {
 };
 
 export const studentBookAPI = {
+  /** 分页浏览书库；q 为空则返回全部（分页） */
+  listCatalog: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page != null) qs.set('page', String(params.page));
+    if (params.limit != null) qs.set('limit', String(params.limit));
+    if (params.q) qs.set('q', params.q);
+    const tail = qs.toString() ? `?${qs.toString()}` : '';
+    return request(STUDENT_API_BASE, `/books${tail}`);
+  },
   search: (q) => {
     const qs = new URLSearchParams({ q }).toString();
     return request(STUDENT_API_BASE, `/books/search?${qs}`);
