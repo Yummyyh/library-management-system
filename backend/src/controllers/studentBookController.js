@@ -3,6 +3,88 @@ const { PrismaClient } = require('@prisma/client');
 const { success, error } = require('../utils/response');
 const prisma = new PrismaClient();
 
+/** 书目查询字段（与搜索/浏览共用） */
+const bookListSelect = {
+  id: true,
+  title: true,
+  author: true,
+  isbn: true,
+  barcodes: {
+    select: {
+      barcode: true,
+      status: true,
+    },
+  },
+};
+
+/**
+ * 将 Prisma 记录转为前端列表项（含 availableCount / stock 兼容字段）
+ * @param {object} b - book 含 barcodes
+ */
+function toBookListItem(b) {
+  const availableCount = b.barcodes?.filter((bc) => bc.status === 'AVAILABLE').length ?? 0;
+  return {
+    id: b.id,
+    title: b.title,
+    author: b.author,
+    isbn: b.isbn,
+    availableCount,
+    stock: availableCount,
+    availability: availableCount > 0 ? 'available' : 'borrowed',
+    barcodes: b.barcodes || [],
+  };
+}
+
+/**
+ * 构建列表查询条件：未删除 + 可选关键词（标题/作者/ISBN）
+ * @param {string} q - 关键词，可为空表示全量
+ */
+function buildBookListWhere(q) {
+  const keyword = String(q || '').trim();
+  const base = { isDeleted: false };
+  if (!keyword) return base;
+  return {
+    ...base,
+    OR: [
+      { title: { contains: keyword } },
+      { author: { contains: keyword } },
+      { isbn: { contains: keyword } },
+    ],
+  };
+}
+
+/**
+ * 0. 浏览书库（分页目录，关键词可选）
+ * 进入页面即可拉取书目，无需强制关键词
+ */
+exports.listCatalog = async (req, res, next) => {
+  try {
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
+    const limitRaw = parseInt(String(req.query.limit || '12'), 10) || 12;
+    const limit = Math.min(50, Math.max(1, limitRaw));
+    const q = String(req.query.q || '').trim();
+
+    const where = buildBookListWhere(q);
+    const skip = (page - 1) * limit;
+
+    const [total, books] = await Promise.all([
+      prisma.book.count({ where }),
+      prisma.book.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        select: bookListSelect,
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    const list = books.map(toBookListItem);
+    return res.json(success({ list, page, limit, total }, 'Books retrieved'));
+  } catch (e) {
+    next(e);
+  }
+};
+
 /**
  * 1. 图书搜索 (Search)
  * 验收标准：关键词搜索、隐藏已删除、返回 availableCount + barcodes + 兼容 stock
@@ -14,49 +96,16 @@ exports.search = async (req, res, next) => {
       return res.status(400).json(error('Search keyword (q) is required', 400));
     }
 
-    const where = {
-      isDeleted: false,
-      OR: [
-        { title: { contains: q } },
-        { author: { contains: q } },
-        { isbn: { contains: q } },
-      ],
-    };
+    const where = buildBookListWhere(q);
 
     const books = await prisma.book.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        author: true,
-        isbn: true,
-        // ✅ 返回条形码数组（含状态），供前端"查看条形码"功能使用
-        barcodes: {
-          select: {
-            barcode: true,
-            status: true,
-          },
-        },
-      },
+      select: bookListSelect,
       take: 50,
     });
 
-    const list = books.map((b) => {
-      // 计算可用数量
-      const availableCount = b.barcodes?.filter(bc => bc.status === 'AVAILABLE').length ?? 0;
-      
-      return {
-        id: b.id,
-        title: b.title,
-        author: b.author,
-        isbn: b.isbn,
-        availableCount,           // ✅ 新字段：可用数
-        stock: availableCount,    // ✅ 兼容旧字段：防止前端乐观更新报错
-        availability: availableCount > 0 ? 'available' : 'borrowed',
-        barcodes: b.barcodes || [], // ✅ 返回条形码详情（确保非 undefined）
-      };
-    });
+    const list = books.map(toBookListItem);
 
     return res.json(success({ list }, 'Books retrieved'));
   } catch (e) {

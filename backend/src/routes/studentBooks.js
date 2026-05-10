@@ -3,7 +3,10 @@ const router = express.Router();
 const studentBookController = require('../controllers/studentBookController');
 const studentAuth = require('../middleware/studentAuth');
 
-// GET /api/student/books/search?q=...
+// GET /api/student/books — 分页浏览目录（q 可选）
+router.get('/', studentBookController.listCatalog);
+
+// GET /api/student/books/search?q=... — 关键词搜索（最多 50 条，兼容旧前端）
 router.get('/search', studentBookController.search);
 
 // POST /api/student/books/:id/borrow (requires student auth)
