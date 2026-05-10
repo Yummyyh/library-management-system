@@ -84,6 +84,13 @@ export const studentBookAPI = {
   }),
 };
 
+// 📬 学生通知 API
+export const studentNotificationAPI = {
+  getNotifications: () => request(STUDENT_API_BASE, '/notifications', {
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+  }),
+};
+
 /** GET /api/librarian/books/:id — librarian book detail (auth required) */
 export const librarianBookAPI = {
   getById: (bookId) =>

@@ -1,16 +1,50 @@
 // frontend/src/pages/student/StudentDashboard.jsx
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { studentSession } from '@/lib/studentSession';
+import { studentNotificationAPI } from '@/lib/api';
 import StudentBackground from '@/components/ui/StudentBackground';
 
-// ... existing imports ...
 export default function StudentDashboard() {
     const student = studentSession.getStudent();
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     const handleLogout = () => {
       studentSession.clear();
       window.location.href = '/login';
     };
+
+    // 页面加载时获取通知
+    useEffect(() => {
+      const fetchNotifications = async () => {
+        try {
+          setLoading(true);
+          const data = await studentNotificationAPI.getNotifications();
+          if (data && data.list && data.list.length > 0) {
+            setNotifications(data.list);
+            setShowNotifications(true); // 有通知时弹出
+          }
+        } catch (err) {
+          console.error('Failed to fetch notifications:', err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      if (student) {
+        fetchNotifications();
+      }
+    }, [student]);
   
     return (
       // 外层加 relative，背景加 pointer-events-none，内容加 relative z-10
@@ -59,6 +93,30 @@ export default function StudentDashboard() {
             </div>
           </div>
         </div>
+
+        {/* 📬 通知对话框 */}
+        <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span>⚠️</span>
+                <span>Overdue Notifications</span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {notifications.map((notif, idx) => (
+                <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-800">
+                    {idx + 1}. <strong>{notif.bookTitle}</strong>已逾期<strong>{notif.overdueDay}</strong>天，请及时归还
+                  </p>
+                </div>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setShowNotifications(false)}>已知晓</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
