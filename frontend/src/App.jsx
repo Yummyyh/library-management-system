@@ -22,6 +22,7 @@ import LibrarianBooksPage from './pages/librarian/BooksPage' // 对应文件名 
 import StudentDashboard from './pages/student/StudentDashboard'
 import StudentBooksPage from './pages/student/StudentBooksPage'
 import StudentRegisterPage from './pages/student/StudentRegisterPage'
+import StudentLoansPage from './pages/student/StudentLoansPage'
 import BookDetailPage from './pages/BookDetailPage'
 
 // UI 组件
@@ -112,6 +113,11 @@ function App() {
           <StudentGuard>
             <BookDetailPage />
           </StudentGuard>
+        } />
+        <Route path="/student/my-loans" element={
+           <StudentGuard>
+            <StudentLoansPage />
+           </StudentGuard>
         } />
 
         {/* 404 处理 */}
