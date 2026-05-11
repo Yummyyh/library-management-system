@@ -81,14 +81,14 @@ export default function StudentDashboard() {
             </Link>
             {/* My Loans Card */}
             <Link to="/student/my-loans">
-              <div className="p-6 border rounded-xl bg-white hover:shadow-md cursor-pointer">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-2xl">
                     📋
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold">My Borrowing History</h2>
-                    <p className="text-sm text-muted-foreground">View your loans</p>
+                    <p className="text-sm text-muted-foreground">View loans and due status</p>
                   </div>
                 </div>
               </div>
@@ -109,13 +109,13 @@ export default function StudentDashboard() {
               {notifications.map((notif, idx) => (
                 <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-800">
-                    {idx + 1}. <strong>{notif.bookTitle}</strong>已逾期<strong>{notif.overdueDay}</strong>天，请及时归还
+                    {idx + 1}. <strong>{notif.bookTitle}</strong> is overdue by <strong>{notif.overdueDay}</strong> day(s). Please return it as soon as possible.
                   </p>
                 </div>
               ))}
             </div>
             <DialogFooter>
-              <Button onClick={() => setShowNotifications(false)}>已知晓</Button>
+              <Button onClick={() => setShowNotifications(false)}>Understood</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
