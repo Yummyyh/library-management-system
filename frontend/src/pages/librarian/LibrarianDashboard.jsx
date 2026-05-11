@@ -25,7 +25,7 @@ export default function LibrarianDashboard() {
             </Button>
           </div>
           {/* Function Cards */}
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {/* Borrow Book Card */}
             <Link to="/librarian/borrow">
               <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
@@ -64,6 +64,19 @@ export default function LibrarianDashboard() {
                   <div>
                     <h2 className="text-xl font-semibold">Book Management</h2>
                     <p className="text-sm text-muted-foreground">Manage book catalog</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+            <Link to="/librarian/overdue">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-rose-100 flex items-center justify-center text-2xl">
+                    ⏰
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Overdue List</h2>
+                    <p className="text-sm text-muted-foreground">View overdue loans and send reminders</p>
                   </div>
                 </div>
               </div>
