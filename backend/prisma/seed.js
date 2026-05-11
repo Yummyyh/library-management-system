@@ -43,6 +43,9 @@ async function main() {
     },
   });
 
+  // Clear loans first so barcode deleteMany in the book loop never violates FK constraints.
+  await prisma.loan.deleteMany({});
+
   // ================= 2. 创建图书与条形码（方案3核心逻辑） =================
   const bookSeeds = [
     { title: "Clean Code: A Handbook of Agile Software Craftsmanship", author: "Robert C. Martin", isbn: "9780132350884", genre: "Technology", description: "Classic guide to writing clean, maintainable code.", language: "English", shelfLocation: "Tech-A1", category: "Software Engineering", publisher: "Prentice Hall", publishedAt: new Date("2008-08-01") },
@@ -97,6 +100,38 @@ async function main() {
     update: { value: '0.50' },
     create: { key: 'FINE_RATE_PER_DAY', value: '0.50' }
   });
+
+  // ================= 4. Demo overdue loan for student STU2023001 (Alice) =================
+  // Uses "The Lean Startup" single copy so we do not conflict with multi-copy titles.
+  const overdueDemoBarcode = '9780307887894-001';
+  const demoBarcode = await prisma.barcode.findUnique({ where: { barcode: overdueDemoBarcode } });
+  if (demoBarcode && student1) {
+    await prisma.loan.deleteMany({ where: { barcodeId: demoBarcode.id } });
+    await prisma.barcode.update({
+      where: { id: demoBarcode.id },
+      data: { status: 'BORROWED' },
+    });
+    const now = new Date();
+    const checkoutDate = new Date(now);
+    checkoutDate.setDate(checkoutDate.getDate() - 21);
+    const dueDate = new Date(now);
+    dueDate.setDate(dueDate.getDate() - 7);
+    await prisma.loan.create({
+      data: {
+        barcodeId: demoBarcode.id,
+        userId: student1.id,
+        checkoutDate,
+        dueDate,
+        returnDate: null,
+        fineAmount: 0,
+        finePaid: false,
+        fineForgiven: false,
+      },
+    });
+    console.log(`✅ Seeded overdue demo loan for student ${student1.studentId} (barcode ${overdueDemoBarcode})`);
+  } else {
+    console.warn('Skipped overdue demo loan: barcode or student STU2023001 not found');
+  }
   
   console.log('🌱 Seeding completed successfully!');
   console.log('📊 Summary:');
@@ -104,6 +139,7 @@ async function main() {
   console.log('   - Books: 6 titles (ISBN layer)');
   console.log('   - Barcodes: 8 entities (1 title × 3 + 5 titles × 1)');
   console.log('   - Config: 1 (fine rate)');
+  console.log('   - Demo: 1 overdue loan for STU2023001 (The Lean Startup copy)');
 }
 
 main()
