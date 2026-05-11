@@ -10,6 +10,7 @@ router.get('/', studentBookController.listCatalog);
 router.get('/search', studentBookController.search);
 
 // GET /api/student/books/my-loans — 查看我的借阅记录（需要登录）
+// NOTE: Must be registered before "/:id" or "my-loans" is treated as a book id.
 router.get('/my-loans', studentAuth, studentBookController.getMyLoans);
 
 // GET /api/student/books/:id — catalog detail (no auth; same spirit as search)
@@ -17,8 +18,6 @@ router.get('/:id', studentBookController.getBookDetail);
 
 // POST /api/student/books/:id/borrow (requires student auth)
 router.post('/:id/borrow', studentAuth, studentBookController.borrow);
-
-
 
 module.exports = router;
 
