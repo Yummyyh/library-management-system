@@ -2,6 +2,7 @@ const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const roleAuth = require('../middleware/roleAuth');
 const { success, error } = require('../utils/response');
+const { appendNotifications } = require('../utils/scheduler');
 const prisma = new PrismaClient();
 const router = express.Router();
 
@@ -176,6 +177,62 @@ router.get('/overdue', roleAuth('LIBRARIAN'), async (req, res, next) => {
     });
 
     res.json(success({ list, total: list.length }, 'Overdue loans retrieved'));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /overdue/remind — push in-memory reminders to students (optional loanIds filter)
+router.post('/overdue/remind', roleAuth('LIBRARIAN'), async (req, res, next) => {
+  try {
+    const now = new Date();
+    const loanIds = Array.isArray(req.body?.loanIds) ? req.body.loanIds : [];
+
+    const where = {
+      returnDate: null,
+      dueDate: { lt: now },
+      ...(loanIds.length > 0 ? { id: { in: loanIds } } : {}),
+    };
+
+    const overdueLoans = await prisma.loan.findMany({
+      where,
+      include: {
+        user: { select: { id: true } },
+        barcode: {
+          select: {
+            book: { select: { id: true, title: true } },
+          },
+        },
+      },
+    });
+
+    const notificationsByUser = {};
+    for (const loan of overdueLoans) {
+      const userId = loan.user.id;
+      const overdueDay = Math.max(
+        1,
+        Math.floor((now.getTime() - loan.dueDate.getTime()) / (1000 * 60 * 60 * 24))
+      );
+      if (!notificationsByUser[userId]) notificationsByUser[userId] = [];
+      notificationsByUser[userId].push({
+        bookId: loan.barcode.book.id,
+        bookTitle: loan.barcode.book.title,
+        overdueDay,
+        dueDate: loan.dueDate,
+        notifiedAt: now,
+      });
+    }
+
+    for (const [userId, notifications] of Object.entries(notificationsByUser)) {
+      appendNotifications(userId, notifications);
+    }
+
+    res.json(
+      success(
+        { remindedLoans: overdueLoans.length, remindedUsers: Object.keys(notificationsByUser).length },
+        'Reminders sent'
+      )
+    );
   } catch (err) {
     next(err);
   }
