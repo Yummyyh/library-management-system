@@ -82,6 +82,14 @@ export const studentBookAPI = {
     method: 'POST',
     headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
   }),
+  myLoans: (status = 'all') => {
+    const qs = status && status !== 'all'
+      ? `?${new URLSearchParams({ status }).toString()}`
+      : '';
+    return request(STUDENT_API_BASE, `/books/my-loans${qs}`, {
+      headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+    });
+  },
 };
 
 // 📬 学生通知 API
