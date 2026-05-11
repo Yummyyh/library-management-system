@@ -25,6 +25,17 @@ exports.clearNotifications = (userId) => {
 };
 
 /**
+ * Append in-memory notifications for a user (e.g. librarian-triggered reminders).
+ */
+exports.appendNotifications = (userId, notifications = []) => {
+  if (!userId || !Array.isArray(notifications) || notifications.length === 0) {
+    return;
+  }
+    const existing = notificationsMap.get(userId) || [];
+  notificationsMap.set(userId, [...existing, ...notifications]);
+};
+
+/**
  * 定时任务：每天凌晨4点查询逾期图书并生成通知
  */
 exports.startOverdueCheckScheduler = () => {
