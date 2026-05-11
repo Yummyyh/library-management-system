@@ -17,6 +17,7 @@ import LibrarianDashboard from './pages/librarian/LibrarianDashboard'
 import BorrowBook from './pages/librarian/BorrowBook'
 import ReturnBook from './pages/librarian/ReturnBook'
 import LibrarianBooksPage from './pages/librarian/BooksPage' // 对应文件名 BooksPage.jsx
+import OverduePage from './pages/librarian/OverduePage'
 
 // Student 页面
 import StudentDashboard from './pages/student/StudentDashboard'
@@ -95,6 +96,11 @@ function App() {
         <Route path="/librarian/books/:bookId" element={
           <LibrarianGuard>
             <BookDetailPage />
+          </LibrarianGuard>
+        } />
+        <Route path="/librarian/overdue" element={
+          <LibrarianGuard>
+            <OverduePage />
           </LibrarianGuard>
         } />
 
