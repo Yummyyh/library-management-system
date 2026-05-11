@@ -80,17 +80,19 @@ export default function StudentDashboard() {
               </div>
             </Link>
             {/* My Loans Card */}
-            <div className="p-6 border rounded-xl bg-white opacity-50 cursor-not-allowed">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-2xl">
-                  📋
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold">My Borrowing History</h2>
-                  <p className="text-sm text-muted-foreground">Coming soon</p>
+            <Link to="/student/my-loans">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-md cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center text-2xl">
+                    📋
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">My Borrowing History</h2>
+                    <p className="text-sm text-muted-foreground">View your loans</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
 

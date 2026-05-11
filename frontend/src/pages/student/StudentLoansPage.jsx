@@ -21,16 +21,17 @@ const StudentLoansPage = () => {
         params,
         headers: {
           // 如果你的登录功能已经完成，这里加上 token：
-          // Authorization: `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('student_token')}`
         }
       });
-      setData(res.data);
+      setData(res.data.data.list);
     } catch (err) {
       message.error('加载借阅记录失败：' + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     loadLoans();
@@ -51,10 +52,11 @@ const StudentLoansPage = () => {
   };
 
   // 表格列
+
   const columns = [
-    { title: '书名', dataIndex: 'title', key: 'title' },
-    { title: '作者', dataIndex: 'author', key: 'author' },
-    { title: '借阅日期', dataIndex: 'borrowDate', key: 'borrowDate' },
+    { title: '书名', dataIndex: 'bookTitle', key: 'bookTitle' },
+    { title: '作者', dataIndex: 'bookAuthor', key: 'bookAuthor' },
+    { title: '借阅日期', dataIndex: 'checkoutDate', key: 'checkoutDate' },
     { title: '到期日期', dataIndex: 'dueDate', key: 'dueDate' },
     { title: '状态', key: 'status', render: (_, record) => getStatusTag(record) },
   ];
