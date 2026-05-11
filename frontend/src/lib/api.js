@@ -17,7 +17,9 @@ export const request = async (base, endpoint, options = {}) => {
     
     const json = await res.json();
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
+      // 仅当请求携带了 Token 时，才把 401/403 视为会话失效（登录接口本身也会返回 401）
+      const hadAuth = Boolean(options.headers?.Authorization);
+      if ((res.status === 401 || res.status === 403) && hadAuth) {
         ['admin_token', 'librarian_token', 'student_token', 'student_info'].forEach(k => localStorage.removeItem(k));
         window.location.href = '/login';
         throw new Error('Session expired. Redirecting...');

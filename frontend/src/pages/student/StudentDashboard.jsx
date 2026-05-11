@@ -39,8 +39,8 @@ export default function StudentDashboard() {
                     🔍
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">Search & Borrow Books</h2>
-                    <p className="text-sm text-muted-foreground">Browse and borrow books</p>
+                    <h2 className="text-xl font-semibold">Browse & Borrow Books</h2>
+                    <p className="text-sm text-muted-foreground">Paged catalog, search, and borrow</p>
                   </div>
                 </div>
               </div>

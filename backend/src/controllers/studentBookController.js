@@ -10,6 +10,8 @@ const bookListSelect = {
   title: true,
   author: true,
   isbn: true,
+  genre: true,
+  category: true,
   barcodes: {
     select: {
       barcode: true,
@@ -29,6 +31,8 @@ function toBookListItem(b) {
     title: b.title,
     author: b.author,
     isbn: b.isbn,
+    genre: b.genre,
+    category: b.category,
     availableCount,
     stock: availableCount,
     availability: availableCount > 0 ? 'available' : 'borrowed',
@@ -50,6 +54,8 @@ function buildBookListWhere(q) {
       { title: { contains: keyword } },
       { author: { contains: keyword } },
       { isbn: { contains: keyword } },
+      { genre: { contains: keyword } },
+      { category: { contains: keyword } },
     ],
   };
 }
