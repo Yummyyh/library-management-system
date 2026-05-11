@@ -123,6 +123,16 @@ export const librarianAPI = {
     headers: { Authorization: `Bearer ${getLibToken() || ''}` },
     body: JSON.stringify(data)
   }),
+  overdueList: () =>
+    request(LIB_API_BASE, '/overdue', {
+      headers: { Authorization: `Bearer ${getLibToken() || ''}` },
+    }),
+  sendOverdueReminders: (loanIds = []) =>
+    request(LIB_API_BASE, '/overdue/remind', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getLibToken() || ''}` },
+      body: JSON.stringify({ loanIds }),
+    }),
 };
 
 export const adminAuthAPI = {
