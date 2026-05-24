@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import JsBarcode from 'jsbarcode';
+import { ChevronDown, ChevronRight } from 'lucide-react'; 
 
 // 📖 Librarian book API configuration
 const LIB_API_BASE = 'http://localhost:3001/api/librarian/books';
@@ -35,7 +36,6 @@ const request = async (endpoint, options = {}, isExternal = false) => {
     }
     return json.data;
   } catch (err) {
-    // ✅ 修复1：仅内部接口触发 401/403 时清理本地存储并跳转
     if (!isExternal && (err.message?.includes('401') || err.message?.includes('403'))) {
       localStorage.removeItem('librarian_token');
       window.location.href = '/login';
@@ -91,9 +91,21 @@ export default function LibrarianBooksPage() {
   const [selectedBook, setSelectedBook] = useState(null);
   const [barcodeList, setBarcodeList] = useState([]);
   const [loadingBarcodes, setLoadingBarcodes] = useState(false);
-  
-  // ✅ New State: For selecting barcodes in Details Dialog
   const [selectedBarcodes, setSelectedBarcodes] = useState([]);
+
+  // ✅ 修改：支持多行同时展开的状态
+  const [expandedRowIds, setExpandedRowIds] = useState([]);
+  const [expandedBookDataMap, setExpandedBookDataMap] = useState({});
+  const [loadingExpandedIds, setLoadingExpandedIds] = useState([]);
+  
+  // Lightbox State
+  const [zoomedImageData, setZoomedImageData] = useState(null);
+  const [zoomedBarcodeText, setZoomedBarcodeText] = useState('');
+
+  // ✅ 新增：打印暂存区相关状态
+  const [printQueue, setPrintQueue] = useState([]); 
+  const [queueOpen, setQueueOpen] = useState(false); 
+  const [queueSelectedIds, setQueueSelectedIds] = useState([]); 
 
   // ISBN Lookup State
   const [isbnQuery, setIsbnQuery] = useState('');
@@ -110,7 +122,7 @@ export default function LibrarianBooksPage() {
     setIsbnQuery('');
     setShowBarcodePreview(false);
     setPreviewBarcodeList([]);
-    setSelectedBarcodes([]); // Reset selection when closing dialogs
+    setSelectedBarcodes([]); 
   }, []);
 
   // Fetch Books List
@@ -127,6 +139,61 @@ export default function LibrarianBooksPage() {
   }, [toast]);
 
   useEffect(() => { fetchBooks(); }, [fetchBooks]);
+
+  // ✅ 修改：处理行展开/收起（支持多行）
+  const handleToggleExpand = async (book) => {
+    if (expandedRowIds.includes(book.id)) {
+      // 收起
+      setExpandedRowIds(prev => prev.filter(id => id !== book.id));
+      setExpandedBookDataMap(prev => {
+        const newMap = { ...prev };
+        delete newMap[book.id];
+        return newMap;
+      });
+    } else {
+      // 展开
+      setExpandedRowIds(prev => [...prev, book.id]);
+      setLoadingExpandedIds(prev => [...prev, book.id]);
+      try {
+        const data = await bookAPI.getById(book.id);
+        setExpandedBookDataMap(prev => ({ ...prev, [book.id]: data }));
+      } catch (err) {
+        toast({ variant: 'destructive', title: 'Failed to load details', description: err.message });
+        setExpandedRowIds(prev => prev.filter(id => id !== book.id));
+      } finally {
+        setLoadingExpandedIds(prev => prev.filter(id => id !== book.id));
+      }
+    }
+  };
+
+  // ✅ 新增：处理条形码放大查看
+  const handleZoomBarcode = (bookId, bcId, barcodeText) => {
+    const img = document.getElementById(`img-${bookId}-${bcId}`);
+    if (img) {
+      setZoomedImageData(img.src);
+      setZoomedBarcodeText(barcodeText);
+    }
+  };
+
+  // ✅ 修改：绘制展开行内的条形码（遍历所有展开的行）
+  useEffect(() => {
+    expandedRowIds.forEach(bookId => {
+      if (expandedBookDataMap[bookId]?.barcodes) {
+        setTimeout(() => {
+          expandedBookDataMap[bookId].barcodes.forEach(bc => {
+            const canvas = document.getElementById(`canvas-${bookId}-${bc.id}`);
+            const img = document.getElementById(`img-${bookId}-${bc.id}`);
+            if (canvas && img) {
+              try {
+                JsBarcode(canvas, bc.barcode, { format: "CODE128", width: 2, height: 40, displayValue: false, margin: 0 });
+                img.src = canvas.toDataURL('image/png');
+              } catch (e) { console.error("Barcode render error:", e); }
+            }
+          });
+        }, 100); 
+      }
+    });
+  }, [expandedRowIds, expandedBookDataMap]);
 
   // Handle View Barcodes (Existing)
   const handleViewBarcodes = async (book) => {
@@ -213,6 +280,129 @@ export default function LibrarianBooksPage() {
         }
       }
     });
+  };
+
+  // ✅ 新增：将当前选中的条形码加入暂存区
+  const addToPrintQueue = () => {
+    if (selectedBarcodes.length === 0) {
+      toast({ variant: "destructive", title: "Nothing to add", description: "Please select at least one barcode." });
+      return;
+    }
+    // 获取当前暂存区已有的条形码集合，用于去重
+    const currentQueueBarcodes = new Set(printQueue.map(item => item.barcode));
+    
+    // 过滤出未添加的条形码，并附带书名
+    const toAdd = selectedBarcodes
+      .filter(bc => !currentQueueBarcodes.has(bc.barcode))
+      .map(bc => ({ ...bc, bookTitle: selectedBook.title }));
+
+    if (toAdd.length === 0) {
+      toast({ title: "Already in queue", description: "Selected barcodes are already in the print queue." });
+    } else {
+      setPrintQueue(prev => [...prev, ...toAdd]);
+      toast({ title: "Added to queue", description: `${toAdd.length} barcodes added to print queue.` });
+    }
+  };
+
+  // ✅ 新增：暂存区选择逻辑
+  const toggleQueueSelect = (barcode, checked) => {
+    if (checked) {
+      setQueueSelectedIds(prev => [...prev, barcode]);
+    } else {
+      setQueueSelectedIds(prev => prev.filter(id => id !== barcode));
+    }
+  };
+
+  const toggleQueueSelectAll = (checked) => {
+    if (checked) {
+      setQueueSelectedIds(printQueue.map(item => item.barcode));
+    } else {
+      setQueueSelectedIds([]);
+    }
+  };
+
+  const removeSelectedFromQueue = () => {
+    setPrintQueue(prev => prev.filter(item => !queueSelectedIds.includes(item.barcode)));
+    setQueueSelectedIds([]);
+  };
+
+  const clearQueue = () => {
+    setPrintQueue([]);
+    setQueueSelectedIds([]);
+  };
+
+  // ✅ 新增：打印暂存区选中项 (复用 Canvas 生成逻辑)
+  const printFromQueue = () => {
+    const selectedItems = printQueue.filter(item => queueSelectedIds.includes(item.barcode));
+    if (selectedItems.length === 0) {
+      toast({ variant: "destructive", title: "Nothing to print", description: "Please select barcodes in the queue." });
+      return;
+    }
+
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    document.body.appendChild(container);
+
+    const barcodeDataUrls = [];
+    let renderedCount = 0;
+    
+    selectedItems.forEach((item, idx) => {
+      const canvas = document.createElement('canvas');
+      canvas.id = `queue-print-canvas-${idx}`;
+      container.appendChild(canvas);
+      try {
+        JsBarcode(canvas, item.barcode, { format: "CODE128", width: 2, height: 50, displayValue: true, margin: 10 });
+        const dataUrl = canvas.toDataURL('image/png');
+        barcodeDataUrls[idx] = { barcode: item.barcode, bookTitle: item.bookTitle, dataUrl };
+        renderedCount++;
+        if (renderedCount === selectedItems.length) {
+          openQueuePrintWindow(barcodeDataUrls);
+          document.body.removeChild(container);
+        }
+      } catch {
+        renderedCount++;
+        if (renderedCount === selectedItems.length) {
+          openQueuePrintWindow(barcodeDataUrls);
+          document.body.removeChild(container);
+        }
+      }
+    });
+  };
+
+  // ✅ 新增：打开暂存区打印窗口
+  const openQueuePrintWindow = (barcodeDataUrls) => {
+    const printWindow = window.open('', '_blank');
+    const barcodeHTML = barcodeDataUrls.map((item) => `
+      <div class="barcode-item">
+        <div style="font-size: 10px; color: #666; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.bookTitle}</div>
+        <img src="${item.dataUrl}" alt="${item.barcode}" style="max-width: 100%; display: block; margin: 0 auto;" />
+        <p class="bc-text">${item.barcode}</p>
+      </div>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+      <head>
+        <title>Print Barcodes from Queue</title>
+        <style>
+          body { font-family: sans-serif; text-align: center; padding: 20px; }
+          .barcode-item { display: inline-block; margin: 10px; border: 1px solid #ddd; padding: 10px; page-break-inside: avoid; width: 200px; vertical-align: top; }
+          .bc-text { font-family: monospace; font-size: 12px; margin-top: 5px; color: #333; }
+          @media print { body { padding: 0; } .barcode-item { margin: 5px; } }
+        </style>
+      </head>
+      <body>
+        <h3>Print Queue (${barcodeDataUrls.length} items)</h3>
+        ${barcodeHTML}
+        <script>
+          window.onload = function() { setTimeout(() => { window.print(); window.close(); }, 500); }
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   // Open print window with pre-rendered barcode images
@@ -482,24 +672,76 @@ export default function LibrarianBooksPage() {
               <TableRow><TableCell colSpan={6} className="text-center py-8">{keyword ? 'No results' : 'No books yet'}</TableCell></TableRow>
             ) : (
               books.map((book) => (
-                <TableRow key={book.id}>
-                  <TableCell className="font-medium">{book.title}</TableCell>
-                  <TableCell>{book.author}</TableCell>
-                  <TableCell className="text-xs">{book.isbn}</TableCell>
-                  <TableCell>
-                    <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs">{book.genre}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`font-bold ${(book.availableCount ?? 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {book.availableCount ?? 0}
-                    </span>
-                  </TableCell>
-                  <TableCell className="space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleViewBarcodes(book)}>🔍 Barcodes</Button>
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(book)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(book)}>Remove</Button>
-                  </TableCell>
-                </TableRow>
+                <Fragment key={book.id}>
+                  {/* 主行：点击整行触发展开 */}
+                  <TableRow 
+                    className="cursor-pointer hover:bg-muted/50 transition-colors" 
+                    onClick={() => handleToggleExpand(book)}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {expandedRowIds.includes(book.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                        {book.title}
+                      </div>
+                    </TableCell>
+                    <TableCell>{book.author}</TableCell>
+                    <TableCell className="text-xs">{book.isbn}</TableCell>
+                    <TableCell>
+                      <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs">{book.genre}</span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`font-bold ${(book.availableCount ?? 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {book.availableCount ?? 0}
+                      </span>
+                    </TableCell>
+                    {/* Actions 列：阻止事件冒泡，防止点击按钮时触发展开 */}
+                    <TableCell className="space-x-2" onClick={(e) => e.stopPropagation()}>
+                      <Button size="sm" variant="outline" onClick={() => handleViewBarcodes(book)}>🔍 Barcodes</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(book)}>Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(book)}>Remove</Button>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* ✅ 修改：展开行改为列表布局，一个条形码占一整行 */}
+                  {expandedRowIds.includes(book.id) && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="bg-slate-50/50 p-6">
+                        {loadingExpandedIds.includes(book.id) ? (
+                          <div className="text-center text-muted-foreground py-4">Loading barcodes...</div>
+                        ) : expandedBookDataMap[book.id]?.barcodes?.length > 0 ? (
+                          <ul className="divide-y rounded-md border text-sm bg-white w-full">
+                            {expandedBookDataMap[book.id].barcodes.map((bc) => (
+                              <li 
+                                key={bc.id || bc.barcode} 
+                                className="flex justify-between items-center gap-4 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                                onClick={() => handleZoomBarcode(book.id, bc.id, bc.barcode)}
+                                title="Click to zoom"
+                              >
+                                <div className="flex items-center gap-6 flex-1">
+                                  {/* 隐藏的 canvas 用于生成条形码 */}
+                                  <canvas id={`canvas-${book.id}-${bc.id}`} className="hidden" />
+                                  {/* 显示的 img 标签，增加边框和背景使其更清晰 */}
+                                  <img id={`img-${book.id}-${bc.id}`} alt={bc.barcode} className="h-10 w-48 object-contain bg-white border rounded p-1 shadow-sm" />
+                                  <span className="font-mono truncate text-xs text-muted-foreground" title={bc.barcode}>
+                                    {bc.barcode}
+                                  </span>
+                                </div>
+                                {/* 状态标签 */}
+                                <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                                  bc.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {bc.status}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="text-center text-muted-foreground py-4">No barcodes found.</div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
               ))
             )}
           </TableBody>
@@ -558,9 +800,16 @@ export default function LibrarianBooksPage() {
                 </div>
                 <div className="flex justify-between items-center mt-4 p-2 bg-gray-50 rounded">
                   <span className="text-sm text-muted-foreground">Selected: {selectedBarcodes.length} items</span>
-                  <Button onClick={handlePrintSelectedBarcodes} disabled={selectedBarcodes.length === 0}>
-                    🖨️ Print Selected
-                  </Button>
+                  <div className="flex gap-2">
+                    {/* ✅ 新增：加入暂存区按钮 */}
+                    <Button variant="secondary" onClick={addToPrintQueue} disabled={selectedBarcodes.length === 0}>
+                      ➕ Add to Queue
+                    </Button>
+                    {/* 保留原有功能：直接打印 */}
+                    <Button onClick={handlePrintSelectedBarcodes} disabled={selectedBarcodes.length === 0}>
+                      🖨️ Print Selected
+                    </Button>
+                  </div>
                 </div>
               </>
             ) : (
@@ -593,6 +842,104 @@ export default function LibrarianBooksPage() {
         </DialogContent>
       </Dialog>
 
+      {/* ✅ 放大查看遮罩层 (Lightbox) */}
+      {zoomedImageData && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm" 
+          onClick={() => setZoomedImageData(null)} // 点击空白区域关闭
+        >
+          <div className="bg-white p-8 rounded-xl shadow-2xl flex flex-col items-center max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">Barcode Detail</h3>
+            <img src={zoomedImageData} alt="Zoomed Barcode" className="w-full h-auto mb-4 border rounded p-2 bg-gray-50" />
+            <p className="text-xl font-mono text-gray-800 mb-6">{zoomedBarcodeText}</p>
+            <Button variant="outline" onClick={() => setZoomedImageData(null)}>Close</Button>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ 新增：左下角悬浮按钮 (FAB) */}
+      <div className="fixed bottom-8 left-8 z-50">
+        <Button 
+          size="lg" 
+          className="rounded-full shadow-lg h-14 w-14 p-0 flex items-center justify-center relative bg-blue-600 hover:bg-blue-700"
+          onClick={() => setQueueOpen(true)}
+        >
+          🖨️
+          {printQueue.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white">
+              {printQueue.length}
+            </span>
+          )}
+        </Button>
+      </div>
+
+      {/* ✅ 新增：打印暂存区 Dialog */}
+      <Dialog open={queueOpen} onOpenChange={setQueueOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>🖨️ Print Queue (暂存区)</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {printQueue.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>Queue is empty.</p>
+                <p className="text-sm mt-2">Open book details and click "Add to Queue" to add barcodes.</p>
+              </div>
+            ) : (
+              <>
+                <div className="border rounded-md mb-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <input 
+                            type="checkbox" 
+                            checked={printQueue.length > 0 && queueSelectedIds.length === printQueue.length}
+                            onChange={(e) => toggleQueueSelectAll(e.target.checked)}
+                          />
+                        </TableHead>
+                        <TableHead>Book Title</TableHead>
+                        <TableHead>Barcode</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {printQueue.map((item) => (
+                        <TableRow key={item.barcode} className={queueSelectedIds.includes(item.barcode) ? "bg-blue-50" : ""}>
+                          <TableCell>
+                            <input 
+                              type="checkbox" 
+                              checked={queueSelectedIds.includes(item.barcode)}
+                              onChange={(e) => toggleQueueSelect(item.barcode, e.target.checked)}
+                            />
+                          </TableCell>
+                          <TableCell className="text-sm truncate max-w-[250px]" title={item.bookTitle}>
+                            {item.bookTitle}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">{item.barcode}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                
+                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border">
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={removeSelectedFromQueue} disabled={queueSelectedIds.length === 0}>
+                      🗑️ Remove Selected ({queueSelectedIds.length})
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={clearQueue} disabled={printQueue.length === 0}>
+                      ❌ Clear All
+                    </Button>
+                  </div>
+                  <Button onClick={printFromQueue} disabled={queueSelectedIds.length === 0} className="bg-blue-600 hover:bg-blue-700">
+                    🖨️ Print Selected ({queueSelectedIds.length})
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
