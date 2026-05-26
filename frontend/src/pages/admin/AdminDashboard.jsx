@@ -39,6 +39,19 @@ export default function AdminDashboard() {
                 </div>
               </div>
             </Link>
+            <Link to="/admin/settings">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">
+                    ⚙️
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">System Settings</h2>
+                    <p className="text-sm text-muted-foreground">Configure library policies and preferences</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
       </div>
