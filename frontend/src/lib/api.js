@@ -1,32 +1,106 @@
 // frontend/src/lib/api.js
-const ADMIN_API_BASE = 'http://localhost:3001/api/admin';
-const STUDENT_API_BASE = 'http://localhost:3001/api/student';
-const LIB_API_BASE = 'http://localhost:3001/api/librarian';
+
+// [修改] 统一 API 根地址，避免各模块硬编码 localhost
+const API_ORIGIN = 'http://localhost:3001';
+const ADMIN_API_BASE = `${API_ORIGIN}/api/admin`;
+// [修改] Settings 页使用的系统配置接口基址
+const CONFIG_API_BASE = `${API_ORIGIN}/api/config`;
+const STUDENT_API_BASE = `${API_ORIGIN}/api/student`;
+const LIB_API_BASE = `${API_ORIGIN}/api/librarian`;
 
 const getStudentToken = () => localStorage.getItem('student_token');
 const getAdminToken = () => localStorage.getItem('admin_token');
 const getLibToken = () => localStorage.getItem('librarian_token');
 
-// 🔹 [Phase 1.3] 全局 401/403 拦截
+// [修改] 按 URL 前缀映射角色与 localStorage key，401 时只清当前角色，避免误删其他端 token
+const ROLE_BY_URL_PREFIX = [
+  { prefix: '/api/admin', tokenKey: 'admin_token', extraKeys: [] },
+  // /api/config 与 admin 共用 admin_token（Settings 页问题根因之一：此前未带此 token）
+  { prefix: '/api/config', tokenKey: 'admin_token', extraKeys: [] },
+  { prefix: '/api/librarian', tokenKey: 'librarian_token', extraKeys: [] },
+  { prefix: '/api/student', tokenKey: 'student_token', extraKeys: ['student_info'] },
+];
+
+// [修改] 判断本次请求是否携带了 Bearer，用于区分「未登录」与「token 失效」
+const bearerToken = (headers = {}) => {
+  const auth = headers.Authorization || headers.authorization;
+  if (!auth || typeof auth !== 'string') return null;
+  const match = auth.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || null;
+};
+
+// [修改] 根据请求 URL 解析应清除的 localStorage 键
+const roleKeysForUrl = (url) => {
+  const path = url.includes('://') ? new URL(url).pathname : url;
+  const match = ROLE_BY_URL_PREFIX.find(({ prefix }) => path.startsWith(prefix));
+  if (!match) return null;
+  return [match.tokenKey, ...match.extraKeys];
+};
+
+// [修改] 仅清除与当前 API 路径对应角色的 session，不再清空全部 token
+const clearRoleSession = (url) => {
+  const keys = roleKeysForUrl(url);
+  if (!keys) return;
+  keys.forEach((key) => localStorage.removeItem(key));
+};
+
+// [修改] 管理员请求统一带头；无 token 时不伪造 Authorization，避免 401 被当成「已登录但过期」
+const adminAuthHeaders = () => {
+  const token = getAdminToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const libAuthHeaders = () => {
+  const token = getLibToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const studentAuthHeaders = () => {
+  const token = getStudentToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+/**
+ * [修改] 全局 fetch 封装
+ * - 401 且本次带了 token：只清对应角色 token，可选跳转 /login（修复 Settings 误踢全站登录）
+ * - 401 但未带 token：仅抛错，不跳转（例如漏传 Authorization 的配置接口）
+ * - 403：权限不足，不清 token、不跳转
+ * @param {RequestInit & { skipAuthRedirect?: boolean }} options skipAuthRedirect=true 时只清 token 不跳转
+ */
 export const request = async (base, endpoint, options = {}) => {
+  const { skipAuthRedirect = false, ...fetchOptions } = options;
   const url = `${base}${endpoint}`;
-  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  const headers = { 'Content-Type': 'application/json', ...fetchOptions.headers };
+  const sentToken = bearerToken(headers);
+
   try {
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(url, { ...fetchOptions, headers });
     if (res.status === 204 || res.headers.get('content-length') === '0') return null;
-    
+
     const json = await res.json();
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
-        ['admin_token', 'librarian_token', 'student_token', 'student_info'].forEach(k => localStorage.removeItem(k));
-        window.location.href = '/login';
-        throw new Error('Session expired. Redirecting...');
+      // [修改] 仅在「曾发送有效 Bearer」时视为 session 失效，避免 /api/config/audit 无 token 时误删 admin_token
+      if (res.status === 401 && sentToken) {
+        clearRoleSession(url);
+        if (!skipAuthRedirect) {
+          window.location.href = '/login';
+        }
+        throw new Error(json.msg || 'Session expired. Please sign in again.');
+      }
+      if (res.status === 401) {
+        throw new Error(json.msg || 'Unauthorized');
+      }
+      // [修改] 403 不再触发全局登出（原先 401/403 会清空所有角色 token）
+      if (res.status === 403) {
+        throw new Error(json.msg || 'Forbidden');
       }
       throw new Error(json.msg || `Request failed: ${res.status}`);
     }
     return json.data;
   } catch (err) {
-    console.error('API Error:', err.message);
+    if (!(err instanceof Error && err.message.includes('Session expired'))) {
+      console.error('API Error:', url, err.message);
+    }
     throw err;
   }
 };
@@ -51,8 +125,25 @@ export const userAPI = {
   }),
   deactivate: (id) => request(ADMIN_API_BASE, `/users/${id}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${getAdminToken() || ''}` }
+    headers: adminAuthHeaders(),
   }),
+};
+
+// [修改] 新增 configAPI：Settings 页此前 import 了但未定义；并统一携带 admin_token
+export const configAPI = {
+  /** GET /api/config — 加载系统配置表单 */
+  getAll: () =>
+    request(CONFIG_API_BASE, '', { headers: adminAuthHeaders() }),
+  /** GET /api/config/audit — 配置变更审计日志（原 Settings 直接 request 未带头导致 401 链式登出） */
+  getAuditLog: () =>
+    request(CONFIG_API_BASE, '/audit', { headers: adminAuthHeaders() }),
+  /** PUT /api/config/:key — 保存单项配置 */
+  update: (key, value) =>
+    request(CONFIG_API_BASE, `/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      headers: adminAuthHeaders(),
+      body: JSON.stringify({ value }),
+    }),
 };
 
 // 🎓 学生 API

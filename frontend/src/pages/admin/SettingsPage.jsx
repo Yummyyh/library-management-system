@@ -12,12 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { configAPI, request } from '@/lib/api';
+// [修改] 仅使用 configAPI；不再直接 request('/audit')，避免漏传 admin_token 触发 api.js 误登出
+import { configAPI } from '@/lib/api';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-
-const CONFIG_API_BASE = 'http://localhost:3001/api/config';
 
 const INITIAL_FORM = {
   SYSTEM_NAME: '',
@@ -121,7 +120,8 @@ export default function SettingsPage() {
   const loadAuditLog = useCallback(async () => {
     try {
       setAuditLoading(true);
-      const data = await request(CONFIG_API_BASE, '/audit');
+      // [修改] 走 configAPI.getAuditLog()，自动附带 admin_token（见 lib/api.js）
+      const data = await configAPI.getAuditLog();
       setAuditLog(data.list || []);
     } catch (err) {
       toast({ variant: 'destructive', title: 'Audit Log Load Failed', description: err.message });
@@ -133,6 +133,7 @@ export default function SettingsPage() {
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
+      // [修改] 使用 configAPI.getAll() 替代未实现的裸 request，并携带 admin_token
       const data = await configAPI.getAll();
       setForm(listToForm(data.list));
       setBackup(loadBackupSettings());
