@@ -2,6 +2,7 @@
 const { PrismaClient } = require('@prisma/client');
 const { success, error } = require('../utils/response');
 const { toBookDetailPayload } = require('../utils/bookDetail');
+const { assertWithinBorrowLimit, dueDateFromPolicy } = require('../utils/getConfig');
 const prisma = new PrismaClient();
 
 /** 书目查询字段（与搜索/浏览共用） */
@@ -151,6 +152,8 @@ exports.borrow = async (req, res, next) => {
     const studentId = req.student.id; // 从中间件获取当前登录学生 ID
 
     const result = await prisma.$transaction(async (tx) => {
+      await assertWithinBorrowLimit(studentId, { prisma: tx });
+
       // 1. 查书目是否存在且未删除
       const book = await tx.book.findUnique({
         where: { id: bookId },
@@ -184,9 +187,9 @@ exports.borrow = async (req, res, next) => {
         data: { status: 'BORROWED' },
       });
 
-      // 4. 创建借阅记录（关联 barcodeId）
+      // 4. 创建借阅记录（关联 barcodeId）；借期来自 Config.BORROW_DAYS
       const now = new Date();
-      const dueDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 默认借期 14 天
+      const dueDate = await dueDateFromPolicy(now, { prisma: tx });
 
       const loan = await tx.loan.create({
         data: {

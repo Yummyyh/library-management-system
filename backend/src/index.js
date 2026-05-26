@@ -25,6 +25,8 @@ app.get('/health', (req, res) => {
 });
 
 // 🔐 Admin routes
+app.use('/api/admin/config', configRoutes);
+// 兼容既有 Settings 前端（/api/config），与 /api/admin/config 共用同一路由
 app.use('/api/config', configRoutes);
 app.use('/api/admin/users', userRoutes);
 
