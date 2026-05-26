@@ -1,4 +1,6 @@
+
 // backend/src/index.js
+const configRoutes = require('./routes/config');
 const express = require('express');
 const cors = require('cors');
 const errorHandler = require('./middleware/errorHandler');
@@ -23,6 +25,7 @@ app.get('/health', (req, res) => {
 });
 
 // 🔐 Admin routes
+app.use('/api/config', configRoutes);
 app.use('/api/admin/users', userRoutes);
 
 // 🔐 Auth routes (unified)

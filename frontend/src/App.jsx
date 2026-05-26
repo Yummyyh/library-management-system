@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage'
 // Admin 页面
 import AdminDashboard from './pages/admin/AdminDashboard'
 import UsersPage from './pages/admin/UsersPage'
+import SettingsPage from './pages/admin/SettingsPage'
 
 // Librarian 页面
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard'
@@ -68,6 +69,11 @@ function App() {
         <Route path="/admin/users" element={
           <AdminGuard>
             <UsersPage />
+          </AdminGuard>
+        } />
+        <Route path="/admin/settings" element={
+          <AdminGuard>
+            <SettingsPage />
           </AdminGuard>
         } />
         {/* ✅ 已移除 /admin/books，Admin 不再有图书管理权限 */}
