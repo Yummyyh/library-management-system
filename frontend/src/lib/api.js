@@ -15,7 +15,6 @@ const getLibToken = () => localStorage.getItem('librarian_token');
 // [修改] 按 URL 前缀映射角色与 localStorage key，401 时只清当前角色，避免误删其他端 token
 const ROLE_BY_URL_PREFIX = [
   { prefix: '/api/admin', tokenKey: 'admin_token', extraKeys: [] },
-  // /api/config 与 admin 共用 admin_token（Settings 页问题根因之一：此前未带此 token）
   { prefix: '/api/config', tokenKey: 'admin_token', extraKeys: [] },
   { prefix: '/api/librarian', tokenKey: 'librarian_token', extraKeys: [] },
   { prefix: '/api/student', tokenKey: 'student_token', extraKeys: ['student_info'] },
@@ -134,7 +133,7 @@ export const configAPI = {
   /** GET /api/config — 加载系统配置表单 */
   getAll: () =>
     request(CONFIG_API_BASE, '', { headers: adminAuthHeaders() }),
-  /** GET /api/config/audit — 配置变更审计日志（原 Settings 直接 request 未带头导致 401 链式登出） */
+  /** GET /api/config/audit — 配置变更审计日志 */
   getAuditLog: () =>
     request(CONFIG_API_BASE, '/audit', { headers: adminAuthHeaders() }),
   /** PUT /api/config/:key — 保存单项配置 */

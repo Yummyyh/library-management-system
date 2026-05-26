@@ -3,6 +3,12 @@ const { PrismaClient } = require('@prisma/client');
 const roleAuth = require('../middleware/roleAuth');
 const { success, error } = require('../utils/response');
 const { appendNotifications } = require('../utils/scheduler');
+const {
+  getBorrowingPolicy,
+  assertWithinBorrowLimit,
+  calculateReturnFine,
+  DAY_MS,
+} = require('../utils/getConfig');
 const prisma = new PrismaClient();
 const router = express.Router();
 
@@ -36,10 +42,19 @@ router.post('/checkout', roleAuth('LIBRARIAN'), async (req, res, next) => {
       return res.status(400).json(error('Due date is required', 400));
     }
 
-    // 2. 日期格式校验
+    // 2. 日期格式校验；应还日不得超过 Config.BORROW_DAYS
+    const checkout = new Date();
     const due = new Date(dueDate);
-    if (isNaN(due.getTime()) || due <= new Date()) {
+    if (isNaN(due.getTime()) || due <= checkout) {
       return res.status(400).json(error('Invalid due date', 400));
+    }
+
+    const { borrowDays } = await getBorrowingPolicy();
+    const maxDue = new Date(checkout.getTime() + borrowDays * DAY_MS);
+    if (due > maxDue) {
+      return res.status(400).json(
+        error(`Due date must be within ${borrowDays} days of checkout`, 400)
+      );
     }
 
     // 3. 状态校验（事务外执行只读查询）
@@ -58,14 +73,15 @@ router.post('/checkout', roleAuth('LIBRARIAN'), async (req, res, next) => {
       return res.status(400).json(error('Invalid student account', 400));
     }
 
-    // 4. 事务内仅执行写操作
+    // 4. 事务内：借阅上限校验 + 写操作
     const result = await prisma.$transaction(async (tx) => {
+      await assertWithinBorrowLimit(user.id, { prisma: tx });
       await tx.barcode.update({ where: { id: bc.id }, data: { status: 'BORROWED' } });
       const loan = await tx.loan.create({
         data: {
           barcodeId: bc.id, // 关联具体条形码 ID
           userId: user.id,
-          checkoutDate: new Date(),
+          checkoutDate: checkout,
           dueDate: due,
           returnDate: null,
           fineAmount: 0,
@@ -84,7 +100,6 @@ router.post('/checkout', roleAuth('LIBRARIAN'), async (req, res, next) => {
     // 5. 成功响应（无条件返回）
     res.json(success(result, 'Checkout successful'));
   } catch (err) {
-    // 兼容带 statusCode 的错误
     if (err.statusCode) {
       return res.status(err.statusCode).json(error(err.message, err.statusCode));
     }
@@ -109,12 +124,31 @@ router.post('/return', roleAuth('LIBRARIAN'), async (req, res, next) => {
       const loan = await tx.loan.findFirst({ where: { barcodeId: bc.id, returnDate: null } });
       if (!loan) throw Object.assign(new Error('No active loan found for this barcode'), { statusCode: 400 });
 
-      // 更新借阅记录
-      await tx.loan.update({ where: { id: loan.id }, data: { returnDate: new Date() } });
+      const returnDate = new Date();
+      const { overdueDays, fineAmount } = await calculateReturnFine(loan, returnDate, {
+        prisma: tx,
+      });
+
+      // 更新借阅记录（逾期：fineAmount = 逾期天数 × DAILY_FINE）
+      await tx.loan.update({
+        where: { id: loan.id },
+        data: {
+          returnDate,
+          fineAmount,
+          // 有新罚金时保持未支付；无罚金时不改动 finePaid
+          ...(fineAmount > 0 ? { finePaid: false } : {}),
+        },
+      });
       // 恢复条形码状态
       await tx.barcode.update({ where: { id: bc.id }, data: { status: 'AVAILABLE' } });
-      
-      return { barcode, bookTitle: bc.book.title };
+
+      return {
+        barcode,
+        bookTitle: bc.book.title,
+        overdueDays,
+        fineAmount,
+        fineForgiven: loan.fineForgiven,
+      };
     });
 
     res.json(success(result, 'Return successful'));

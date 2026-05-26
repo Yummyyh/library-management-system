@@ -1,7 +1,58 @@
 // backend/prisma/seed.js
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
+const { ensureConfigDefaults } = require('../src/utils/configDefaults');
 const prisma = new PrismaClient();
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** 创建在借记录，并标记条形码为 BORROWED */
+async function seedActiveLoan({ barcodeStr, userId, checkoutDate, dueDate }) {
+  const bc = await prisma.barcode.findUnique({ where: { barcode: barcodeStr } });
+  if (!bc || !userId) return false;
+
+  await prisma.loan.deleteMany({ where: { barcodeId: bc.id } });
+  await prisma.barcode.update({ where: { id: bc.id }, data: { status: 'BORROWED' } });
+  await prisma.loan.create({
+    data: {
+      barcodeId: bc.id,
+      userId,
+      checkoutDate,
+      dueDate,
+      returnDate: null,
+      fineAmount: 0,
+      finePaid: false,
+      fineForgiven: false,
+    },
+  });
+  return true;
+}
+
+/** 创建已还记录，条形码恢复 AVAILABLE */
+async function seedReturnedLoan({ barcodeStr, userId, checkoutDate, dueDate, returnDate }) {
+  const bc = await prisma.barcode.findUnique({ where: { barcode: barcodeStr } });
+  if (!bc || !userId) return false;
+
+  await prisma.loan.deleteMany({ where: { barcodeId: bc.id } });
+  await prisma.barcode.update({ where: { id: bc.id }, data: { status: 'AVAILABLE' } });
+  await prisma.loan.create({
+    data: {
+      barcodeId: bc.id,
+      userId,
+      checkoutDate,
+      dueDate,
+      returnDate,
+      fineAmount: 0,
+      finePaid: true,
+      fineForgiven: false,
+    },
+  });
+  return true;
+}
+
+function daysFromNow(days) {
+  return new Date(Date.now() + days * DAY_MS);
+}
 
 async function main() {
   // ================= 1. 创建用户 (保持不变) =================
@@ -67,7 +118,8 @@ async function main() {
         title: bookData.title, author: bookData.author, genre: bookData.genre,
         description: bookData.description, language: bookData.language,
         shelfLocation: bookData.shelfLocation, category: bookData.category,
-        publisher: bookData.publisher, publishedAt: bookData.publishedAt, isDeleted: false,
+        publisher: bookData.publisher, publishedAt: bookData.publishedAt,
+        isDeleted: false,
       },
       create: { 
         ...bookData, 
@@ -94,52 +146,52 @@ async function main() {
     }
   }
 
-  // ================= 3. 系统配置 =================
-  await prisma.config.upsert({
-    where: { key: 'FINE_RATE_PER_DAY' },
-    update: { value: '0.50' },
-    create: { key: 'FINE_RATE_PER_DAY', value: '0.50' }
-  });
+  // ================= 3. 系统配置（与 Admin Settings 键一致） =================
+  await ensureConfigDefaults(prisma);
 
-  // ================= 4. Demo overdue loan for student STU2023001 (Alice) =================
-  // Uses "The Lean Startup" single copy so we do not conflict with multi-copy titles.
-  const overdueDemoBarcode = '9780307887894-001';
-  const demoBarcode = await prisma.barcode.findUnique({ where: { barcode: overdueDemoBarcode } });
-  if (demoBarcode && student1) {
-    await prisma.loan.deleteMany({ where: { barcodeId: demoBarcode.id } });
-    await prisma.barcode.update({
-      where: { id: demoBarcode.id },
-      data: { status: 'BORROWED' },
+  // ================= 4. 演示借阅（仅 STU2023001） =================
+
+  if (student1) {
+    // Alice：在借，未逾期（应还约 20 天后）
+    await seedActiveLoan({
+      barcodeStr: '9780132350884-001',
+      userId: student1.id,
+      checkoutDate: daysFromNow(-10),
+      dueDate: daysFromNow(20),
     });
-    const now = new Date();
-    const checkoutDate = new Date(now);
-    checkoutDate.setDate(checkoutDate.getDate() - 21);
-    const dueDate = new Date(now);
-    dueDate.setDate(dueDate.getDate() - 7);
-    await prisma.loan.create({
-      data: {
-        barcodeId: demoBarcode.id,
-        userId: student1.id,
-        checkoutDate,
-        dueDate,
-        returnDate: null,
-        fineAmount: 0,
-        finePaid: false,
-        fineForgiven: false,
-      },
+    // Alice：在借，即将到期（约 4 天后到期）
+    await seedActiveLoan({
+      barcodeStr: '9780061120084-001',
+      userId: student1.id,
+      checkoutDate: daysFromNow(-26),
+      dueDate: daysFromNow(4),
     });
-    console.log(`✅ Seeded overdue demo loan for student ${student1.studentId} (barcode ${overdueDemoBarcode})`);
-  } else {
-    console.warn('Skipped overdue demo loan: barcode or student STU2023001 not found');
+    // Alice：已还历史（不影响当前在借上限）
+    await seedReturnedLoan({
+      barcodeStr: '9780201616224-001',
+      userId: student1.id,
+      checkoutDate: daysFromNow(-40),
+      dueDate: daysFromNow(-12),
+      returnDate: daysFromNow(-11),
+    });
+    // 逾期样例（The Lean Startup），供读者/馆员逾期演示
+    await seedActiveLoan({
+      barcodeStr: '9780307887894-001',
+      userId: student1.id,
+      checkoutDate: daysFromNow(-25),
+      dueDate: daysFromNow(-5),
+    });
+    console.log(`✅ Seeded demo loans for ${student1.studentId}: 2 on-time/due soon, 1 overdue, 1 returned`);
   }
-  
+
   console.log('🌱 Seeding completed successfully!');
   console.log('📊 Summary:');
   console.log('   - Users: 4 (1 admin, 1 librarian, 2 students)');
   console.log('   - Books: 6 titles (ISBN layer)');
   console.log('   - Barcodes: 8 entities (1 title × 3 + 5 titles × 1)');
-  console.log('   - Config: 1 (fine rate)');
-  console.log('   - Demo: 1 overdue loan for STU2023001 (The Lean Startup copy)');
+  console.log('   - Config: defaults via ensureConfigDefaults');
+  console.log('   - STU2023001: 3 active (2 normal + 1 overdue) + 1 returned');
+  console.log('   - STU2023002: no demo loans');
 }
 
 main()
