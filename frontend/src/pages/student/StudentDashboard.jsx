@@ -15,6 +15,7 @@ import StudentBackground from '@/components/ui/StudentBackground';
 
 export default function StudentDashboard() {
     const student = studentSession.getStudent();
+    const studentId = student?.id;
     const [showNotifications, setShowNotifications] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,27 +25,55 @@ export default function StudentDashboard() {
       window.location.href = '/login';
     };
 
-    // 页面加载时获取通知
+    const dismissNotifications = async () => {
+      setShowNotifications(false);
+      try {
+        await studentNotificationAPI.clearNotifications();
+      } catch (err) {
+        console.error('Failed to clear notifications:', err.message);
+      }
+    };
+
+    const handleNotificationOpenChange = (open) => {
+      if (open) {
+        setShowNotifications(true);
+        return;
+      }
+      dismissNotifications();
+    };
+
+    // 仅在登录用户 id 变化时拉取一次，避免每次渲染重复请求导致弹窗无法关闭
     useEffect(() => {
+      if (!studentId) return;
+
+      let cancelled = false;
+
       const fetchNotifications = async () => {
         try {
           setLoading(true);
           const data = await studentNotificationAPI.getNotifications();
-          if (data && data.list && data.list.length > 0) {
+          if (cancelled) return;
+          if (data?.list?.length > 0) {
             setNotifications(data.list);
-            setShowNotifications(true); // 有通知时弹出
+            setShowNotifications(true);
           }
         } catch (err) {
-          console.error('Failed to fetch notifications:', err.message);
+          if (!cancelled) {
+            console.error('Failed to fetch notifications:', err.message);
+          }
         } finally {
-          setLoading(false);
+          if (!cancelled) {
+            setLoading(false);
+          }
         }
       };
 
-      if (student) {
-        fetchNotifications();
-      }
-    }, [student]);
+      fetchNotifications();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [studentId]);
   
     return (
       // 外层加 relative，背景加 pointer-events-none，内容加 relative z-10
@@ -97,7 +126,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* 📬 通知对话框 */}
-        <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+        <Dialog open={showNotifications} onOpenChange={handleNotificationOpenChange}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -115,7 +144,7 @@ export default function StudentDashboard() {
               ))}
             </div>
             <DialogFooter>
-              <Button onClick={() => setShowNotifications(false)}>Understood</Button>
+              <Button onClick={dismissNotifications}>Understood</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

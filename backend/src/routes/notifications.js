@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getNotifications } = require('../utils/scheduler');
+const { getNotifications, clearNotifications } = require('../utils/scheduler');
 const { success } = require('../utils/response');
 const studentAuth = require('../middleware/studentAuth');
 
@@ -22,6 +22,16 @@ router.get('/', studentAuth, (req, res) => {
       list: formattedNotifications,
       total: formattedNotifications.length,
     }, 'Notifications retrieved'));
+  } catch (err) {
+    res.status(500).json({ msg: 'Internal server error', data: null });
+  }
+});
+
+// 学生确认通知后清空内存中的通知，避免重复弹出
+router.delete('/', studentAuth, (req, res) => {
+  try {
+    clearNotifications(req.student.id);
+    res.json(success(null, 'Notifications cleared'));
   } catch (err) {
     res.status(500).json({ msg: 'Internal server error', data: null });
   }

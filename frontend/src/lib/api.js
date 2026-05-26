@@ -187,6 +187,10 @@ export const studentNotificationAPI = {
   getNotifications: () => request(STUDENT_API_BASE, '/notifications', {
     headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
   }),
+  clearNotifications: () => request(STUDENT_API_BASE, '/notifications', {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+  }),
 };
 
 /** GET /api/librarian/books/:id — librarian book detail (auth required) */
