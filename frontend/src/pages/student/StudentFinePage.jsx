@@ -11,6 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 // 筛选选项（和借阅页保持一致）
 const STATUS_OPTIONS = [
@@ -52,6 +59,10 @@ export default function StudentFinePage() {
   const [rows, setRows] = useState([]);
   const [payLoading, setPayLoading] = useState('');
 
+  // 弹窗状态控制
+  const [showPayDialog, setShowPayDialog] = useState(false);
+  const [currentFine, setCurrentFine] = useState(null);
+
   // 登出逻辑（和借阅页保持一致）
   const handleLogout = () => {
     ['student_token', 'student_info'].forEach((key) => localStorage.removeItem(key));
@@ -75,15 +86,25 @@ export default function StudentFinePage() {
     }
   };
 
-  // 缴纳罚款
-  const handlePayFine = async (fineId) => {
+  // 点击 Pay 按钮：打开支付弹窗
+  const handleOpenPayDialog = (fine) => {
+    setCurrentFine(fine);
+    setShowPayDialog(true);
+  };
+
+  // 确认支付：调用后端接口，更新状态
+  const handleConfirmPay = async () => {
+    if (!currentFine) return;
     try {
-      setPayLoading(fineId);
-      await studentBookAPI.payFine(fineId);
+      setPayLoading(currentFine.fineId);
+      await studentBookAPI.payFine(currentFine.fineId);
       toast({
         title: 'Success',
         description: 'Fine paid successfully',
       });
+      // 关闭弹窗，刷新列表
+      setShowPayDialog(false);
+      setCurrentFine(null);
       loadFines();
     } catch (err) {
       toast({
@@ -161,7 +182,7 @@ export default function StudentFinePage() {
                     {row.status === 'unpaid' && (
                       <Button
                         size="sm"
-                        onClick={() => handlePayFine(row.fineId)}
+                        onClick={() => handleOpenPayDialog(row)}
                         disabled={payLoading === row.fineId}
                       >
                         {payLoading === row.fineId ? 'Processing...' : 'Pay'}
@@ -181,6 +202,40 @@ export default function StudentFinePage() {
           </Table>
         </div>
       </div>
+
+      {/* 支付宝二维码支付弹窗 */}
+      <Dialog open={showPayDialog} onOpenChange={setShowPayDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pay Fine via Alipay</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Paying: <span className="font-bold">¥{currentFine ? Number(currentFine.fineAmount).toFixed(2) : '0.00'}</span>
+            </p >
+            {/* 模拟支付宝二维码 */}
+            <div className="border border-gray-200 p-4 bg-white rounded-lg">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=alipay://pay?amount=${currentFine?.fineAmount || 0}&orderId=${currentFine?.fineId || ''}`}
+                alt="Alipay QR Code"
+                className="w-36 h-36"
+              />
+            </div>
+            <p className="text-xs text-gray-500 text-center">
+              请使用支付宝扫码支付<br />
+              （模拟二维码，扫码后点击「确认支付」）
+            </p >
+          </div>
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setShowPayDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmPay} disabled={payLoading !== ''}>
+              {payLoading ? 'Processing...' : 'Confirm Payment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
