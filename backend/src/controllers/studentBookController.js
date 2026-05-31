@@ -292,3 +292,110 @@ exports.getMyLoans = async (req, res, next) => {
     next(e);
   }
 };
+
+
+
+
+/**
+ * 4. 学生查看个人罚款记录 (getMyFines STU-08)
+ * 支持状态筛选：all / unpaid / paid
+ * 展示：书名、作者、借阅日期、应还日期、逾期天数、罚款金额、缴费状态
+ */
+exports.getMyFines = async (req, res, next) => {
+  try {
+    const studentId = req.student.id;
+    const status = req.query.status;
+
+    // 基础查询：当前登录学生的借阅记录（产生罚款的记录）
+    const where = {
+      userId: studentId
+    };
+
+    // 按缴费状态筛选
+    if (status === 'unpaid') {
+      where.finePaid = false;
+    } else if (status === 'paid') {
+      where.finePaid = true;
+    }
+
+    // 联表查询：借阅 -> 图书册 -> 图书
+    const loans = await prisma.loan.findMany({
+      where,
+      include: {
+        barcode: {
+          include: {
+            book: {
+              select: {
+                title: true,
+                author: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        checkoutDate: 'desc'
+      }
+    });
+
+    // 格式化数据
+    const now = new Date();
+    const list = loans.map(loan => {
+      const book = loan.barcode.book;
+      // 计算逾期天数
+      const diffTime = now - loan.dueDate;
+      const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      return {
+        fineId: loan.id,
+        bookTitle: book.title,
+        bookAuthor: book.author,
+        checkoutDate: loan.checkoutDate,
+        dueDate: loan.dueDate,
+        overdueDays: Math.max(0, overdueDays),
+        fineAmount: loan.fineAmount,
+        status: loan.finePaid ? 'paid' : 'unpaid'
+      };
+    });
+
+    return res.json(success({ list }, 'Fines retrieved'));
+  } catch (e) {
+    next(e);
+  }
+};
+
+/**
+ * 5. 学生缴纳罚款 (payFine STU-08)
+ * 根据借阅ID(loanId)更新 finePaid 状态为已缴费
+ */
+exports.payFine = async (req, res, next) => {
+  try {
+    const loanId = req.params.id;
+    const studentId = req.student.id;
+
+    // 校验：记录属于当前学生 + 未缴费
+    const loan = await prisma.loan.findFirst({
+      where: {
+        id: loanId,
+        userId: studentId
+      }
+    });
+
+    if (!loan) {
+      return res.json(error('Fine record not found', 404));
+    }
+    if (loan.finePaid) {
+      return res.json(error('Fine already paid', 400));
+    }
+
+    // 更新缴费状态
+    await prisma.loan.update({
+      where: { id: loanId },
+      data: { finePaid: true }
+    });
+
+    return res.json(success({}, 'Payment successful'));
+  } catch (e) {
+    next(e);
+  }
+};
