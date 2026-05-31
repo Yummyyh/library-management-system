@@ -26,6 +26,7 @@ import StudentBooksPage from './pages/student/StudentBooksPage'
 import StudentRegisterPage from './pages/student/StudentRegisterPage'
 import StudentLoansPage from './pages/student/StudentLoansPage'
 import BookDetailPage from './pages/BookDetailPage'
+import StudentFinePage from './pages/student/StudentFinePage'
 
 // UI 组件
 import { Toaster } from '@/components/ui/toaster'
@@ -130,6 +131,11 @@ function App() {
            <StudentGuard>
             <StudentLoansPage />
            </StudentGuard>
+        } />
+        <Route path="/student/fine" element={
+           <StudentGuard>
+            <StudentFinePage />
+          </StudentGuard>
         } />
 
         {/* 404 处理 */}
