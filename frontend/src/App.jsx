@@ -19,6 +19,7 @@ import BorrowBook from './pages/librarian/BorrowBook'
 import ReturnBook from './pages/librarian/ReturnBook'
 import LibrarianBooksPage from './pages/librarian/BooksPage' // 对应文件名 BooksPage.jsx
 import OverduePage from './pages/librarian/OverduePage'
+import LibrarianHoldsPage from './pages/librarian/LibrarianHoldsPage'
 
 // Student 页面
 import StudentDashboard from './pages/student/StudentDashboard'
@@ -27,6 +28,7 @@ import StudentRegisterPage from './pages/student/StudentRegisterPage'
 import StudentLoansPage from './pages/student/StudentLoansPage'
 import BookDetailPage from './pages/BookDetailPage'
 import StudentFinePage from './pages/student/StudentFinePage'
+import StudentHoldsPage from './pages/student/StudentHoldsPage'
 
 // UI 组件
 import { Toaster } from '@/components/ui/toaster'
@@ -110,6 +112,11 @@ function App() {
             <OverduePage />
           </LibrarianGuard>
         } />
+        <Route path="/librarian/holds" element={
+          <LibrarianGuard>
+            <LibrarianHoldsPage />
+          </LibrarianGuard>
+        } />
 
         {/* 🎓 Student 路由 */}
         <Route path="/student" element={
@@ -136,6 +143,11 @@ function App() {
            <StudentGuard>
             <StudentFinePage />
           </StudentGuard>
+        } />
+        <Route path="/student/holds" element={
+           <StudentGuard>
+            <StudentHoldsPage />
+           </StudentGuard>
         } />
 
         {/* 404 处理 */}

@@ -40,11 +40,23 @@ app.post('/api/librarian/auth/login', librarianAuthController.login);
 app.use('/api/librarian/books', bookRoutes);
 app.use('/api/librarian', librarianRoutes);
 
+// 🔐 Hold/Reservation routes
+const holdController = require('./controllers/holdController');
+app.get('/api/librarian/holds', holdController.listAllHolds);
+app.put('/api/librarian/holds/:id/ready', holdController.markReady);
+app.put('/api/librarian/holds/:id/cancel', holdController.cancelHold);
+
 // 🔐 Student routes
 app.use('/api/student/auth', studentAuthRoutes);
 app.use('/api/student/books', studentBookRoutes);
 app.use('/api/student/due-notices', dueNoticeRoutes);
 app.use('/api/student/notifications', notificationRoutes);
+
+// Student hold routes
+const studentAuth = require('./middleware/studentAuth');
+app.post('/api/student/holds', studentAuth, holdController.createHold);
+app.get('/api/student/holds', studentAuth, holdController.listMyHolds);
+app.delete('/api/student/holds/:id', studentAuth, holdController.cancelMyHold);
 
 // 🔍 External API routes (ISBN Lookup, etc.) ✅ 新增
 app.use('/api/external', externalRoutes);

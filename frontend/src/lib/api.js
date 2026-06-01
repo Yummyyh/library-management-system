@@ -209,6 +209,36 @@ export const studentNotificationAPI = {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
   }),
+  markAsRead: (id) => request(STUDENT_API_BASE, `/notifications/${id}/read`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+  }),
+};
+
+// 📌 学生预约 API
+export const studentHoldAPI = {
+  create: (bookId) => request(STUDENT_API_BASE, '/holds', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+    body: JSON.stringify({ bookId }),
+  }),
+  list: () => request(STUDENT_API_BASE, '/holds', {
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+  }),
+  cancel: (id) => request(STUDENT_API_BASE, `/holds/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+  }),
+};
+
+// 📌 管理员预约 API
+export const librarianHoldAPI = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request(LIB_API_BASE, `/holds${qs ? '?' + qs : ''}`);
+  },
+  markReady: (id) => request(LIB_API_BASE, `/holds/${id}/ready`, { method: 'PUT' }),
+  cancel: (id) => request(LIB_API_BASE, `/holds/${id}/cancel`, { method: 'PUT' }),
 };
 
 /** GET /api/librarian/books/:id — librarian book detail (auth required) */

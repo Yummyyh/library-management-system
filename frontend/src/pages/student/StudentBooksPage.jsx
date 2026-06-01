@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { studentBookAPI } from '@/lib/api';
+import { studentBookAPI, studentHoldAPI } from '@/lib/api';
 import { studentSession } from '@/lib/studentSession';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ export default function StudentBooksPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [borrowingId, setBorrowingId] = useState(null);
+  const [holdingId, setHoldingId] = useState(null);
   const [results, setResults] = useState([]);
   const [expandedBookId, setExpandedBookId] = useState(null);
 
@@ -128,6 +129,18 @@ export default function StudentBooksPage() {
       });
     } finally {
       setBorrowingId(null);
+    }
+  };
+
+  const holdBook = async (book) => {
+    try {
+      setHoldingId(book.id);
+      await studentHoldAPI.create(book.id);
+      toast({ title: 'Reserved', description: `You reserved "${book.title}"` });
+    } catch (err) {
+      toast({ variant: 'destructive', title: 'Reserve failed', description: err.message });
+    } finally {
+      setHoldingId(null);
     }
   };
 
@@ -331,13 +344,23 @@ export default function StudentBooksPage() {
                     </TableCell>
 
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        disabled={!available || borrowingId === b.id}
-                        onClick={() => borrow(b)}
-                      >
-                        {borrowingId === b.id ? 'Processing…' : 'Borrow'}
-                      </Button>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          disabled={!available || borrowingId === b.id}
+                          onClick={() => borrow(b)}
+                        >
+                          {borrowingId === b.id ? 'Processing…' : 'Borrow'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={holdingId === b.id}
+                          onClick={() => holdBook(b)}
+                        >
+                          {holdingId === b.id ? '…' : 'Reserve'}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );

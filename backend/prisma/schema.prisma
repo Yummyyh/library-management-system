@@ -42,7 +42,8 @@ model User {
   /// 该用户的心愿单
   wishlists    Wishlist[]
   /// 该用户的操作日志
-  auditLogs    AuditLog[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
 }
 
 // ========== 图书表（书目层：ISBN维度） ==========
@@ -206,6 +207,19 @@ model Config {
   key    String @unique
   /// 值
   value  String
+}
+
+// ========== 通知表：系统通知与管理员消息 ==========
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // "HOLD_READY" | "HOLD_CANCELLED" | "OVERDUE" | "GENERAL"
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 // ========== 审计日志表：记录操作日志 ==========

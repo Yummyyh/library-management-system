@@ -108,6 +108,20 @@ export default function StudentDashboard() {
                 </div>
               </div>
             </Link>
+            {/* My Holds Card */}
+            <Link to="/student/holds">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-2xl">
+                    📌
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">My Reservations</h2>
+                    <p className="text-sm text-muted-foreground">Track book reservation status</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
             {/* My Loans Card */}
             <Link to="/student/my-loans">
               <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
@@ -145,21 +159,33 @@ export default function StudentDashboard() {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <span>⚠️</span>
-                <span>Overdue Notifications</span>
+                <span>📬</span>
+                <span>Notifications</span>
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {notifications.map((notif, idx) => (
-                <div key={idx} className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-800">
-                    {idx + 1}. <strong>{notif.bookTitle}</strong> is overdue by <strong>{notif.overdueDay}</strong> day(s). Please return it as soon as possible.
-                  </p>
-                </div>
-              ))}
+              {notifications.map((notif, idx) => {
+                const isOverdue = notif.type === 'OVERDUE';
+                const isHoldReady = notif.type === 'HOLD_READY';
+                const isHoldCancelled = notif.type === 'HOLD_CANCELLED';
+                const bgClass = isOverdue ? 'bg-red-50 border-red-200' :
+                  isHoldReady ? 'bg-green-50 border-green-200' :
+                  isHoldCancelled ? 'bg-gray-50 border-gray-200' :
+                  'bg-blue-50 border-blue-200';
+                const textClass = isOverdue ? 'text-red-800' :
+                  isHoldReady ? 'text-green-800' :
+                  isHoldCancelled ? 'text-gray-600' :
+                  'text-blue-800';
+                return (
+                  <div key={idx} className={`p-3 border rounded-lg ${bgClass}`}>
+                    <p className={`text-sm font-medium ${textClass}`}>{notif.title}</p>
+                    <p className={`text-sm mt-1 ${textClass}`}>{notif.message}</p>
+                  </div>
+                );
+              })}
             </div>
             <DialogFooter>
-              <Button onClick={dismissNotifications}>Understood</Button>
+              <Button onClick={dismissNotifications}>Dismiss</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

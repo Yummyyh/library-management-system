@@ -68,6 +68,20 @@ export default function LibrarianDashboard() {
                 </div>
               </div>
             </Link>
+            {/* Manage Holds Card */}
+            <Link to="/librarian/holds">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center text-2xl">
+                    📌
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Manage Holds</h2>
+                    <p className="text-sm text-muted-foreground">View and process book reservations</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
             <Link to="/librarian/overdue">
               <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
                 <div className="flex items-center gap-4">
