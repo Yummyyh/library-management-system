@@ -180,6 +180,24 @@ export const studentBookAPI = {
       headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
     });
   },
+
+  // 查询罚款记录
+  fines: (status = 'all') => {
+    const qs = status && status !== 'all'
+      ? `?${new URLSearchParams({ status }).toString()}`
+      : '';
+    return request(STUDENT_API_BASE, `/books/fine${qs}`, {
+      headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+    });
+  },
+  // 缴纳罚款
+  payFine: (fineId) => {
+    return request(STUDENT_API_BASE, `/books/fine/${fineId}/pay`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+    });
+  },
+
 };
 
 // 📬 学生通知 API

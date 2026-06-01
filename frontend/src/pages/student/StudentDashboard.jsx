@@ -122,6 +122,21 @@ export default function StudentDashboard() {
                 </div>
               </div>
             </Link>
+            {/* My Fines Card */}
+            <Link to="/student/fine">
+              <div className="p-6 border rounded-xl bg-white hover:shadow-md transition-shadow">
+                 <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-red-100 flex items-center justify-center">
+                    {/* 罚款相关的图标，和你们项目风格统一 */}
+                    <span className="text-red-600 font-bold text-xl">¥</span>
+                    </div>
+                    <div>
+                     <h2 className="text-xl font-semibold">My Fines</h2>
+                     <p className="text-sm text-muted-foreground">View and pay overdue fines</p >
+                  </div>
+                 </div>
+              </div>
+            </Link>
           </div>
         </div>
 

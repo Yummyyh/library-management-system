@@ -13,6 +13,12 @@ router.get('/search', studentBookController.search);
 // NOTE: Must be registered before "/:id" or "my-loans" is treated as a book id.
 router.get('/my-loans', studentAuth, studentBookController.getMyLoans);
 
+// GET /api/student/books/fine — 查看我的罚款记录 STU-08
+router.get('/fine', studentAuth, studentBookController.getMyFines);
+
+// POST /api/student/books/fine/:id/pay — 缴纳罚款 STU-08
+router.post('/fine/:id/pay', studentAuth, studentBookController.payFine);
+
 // GET /api/student/books/:id — catalog detail (no auth; same spirit as search)
 router.get('/:id', studentBookController.getBookDetail);
 
