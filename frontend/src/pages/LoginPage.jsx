@@ -16,11 +16,17 @@ import {
 } from '@/components/ui/select';
 import LoginBackground from '@/components/ui/LoginBackground';
 
+// 快捷登录测试账本
+const QUICK_ACCOUNTS = [
+  { label: 'stu', role: 'student', value: 'STU2023001', fields: { studentId: 'STU2023001', email: '', password: 'stud123' } },
+  { label: 'lib', role: 'librarian', value: 'librarian@library.com', fields: { studentId: '', email: 'librarian@library.com', password: 'lib123' } },
+  { label: 'adm', role: 'admin', value: 'admin@library.com', fields: { studentId: '', email: 'admin@library.com', password: 'admin123' } }
+];
+
 export default function LoginPage() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // ✅ 从 URL 参数读取角色
   const searchParams = new URLSearchParams(window.location.search);
   const urlRole = searchParams.get('role');
 
@@ -29,6 +35,12 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const isStudentLogin = role === 'student';
+
+  // 一键填入核心函数
+  const handleQuickFill = (acc) => {
+    setRole(acc.role);    // 切换下拉框角色
+    setForm(acc.fields);  // 填满学号/邮箱以及密码
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -46,7 +58,6 @@ export default function LoginPage() {
     try {
       setSubmitting(true);
 
-      // 🔹 [P2] 修改：登录前清理所有残留角色 Token，防止状态冲突
       localStorage.removeItem('admin_token');
       localStorage.removeItem('librarian_token');
       localStorage.removeItem('student_token');
@@ -80,8 +91,8 @@ export default function LoginPage() {
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-gray-50">
       <LoginBackground className="pointer-events-none" />
       <form onSubmit={onSubmit} className="relative z-10 w-full max-w-md space-y-6 border rounded-xl bg-white p-8 shadow-sm">
-        {/* 恢复标题 */}
         <h1 className="text-2xl font-bold text-center">📚 Library Login</h1>
+        
         <div className="grid gap-2">
           <Label>Role</Label>
           <Select value={role} onValueChange={setRole}>
@@ -95,13 +106,14 @@ export default function LoginPage() {
             </SelectContent>
           </Select>
         </div>
+
         {isStudentLogin ? (
           <div className="grid gap-2">
             <Label>Student ID</Label>
             <Input
               value={form.studentId}
               onChange={e => setForm({ ...form, studentId: e.target.value })}
-              placeholder="e.g., STU2023001"
+              placeholder="e.g. STU2023001"
               required
             />
           </div>
@@ -112,11 +124,12 @@ export default function LoginPage() {
               type="email"
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
-              placeholder="e.g., admin@library.com"
+              placeholder="e.g. role@library.com"
               required
             />
           </div>
         )}
+
         <div className="grid gap-2">
           <Label>Password</Label>
           <Input
@@ -126,9 +139,26 @@ export default function LoginPage() {
             required
           />
         </div>
+
+        {/* 新增：测试快捷标签 */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs border-t border-dashed">
+          <span className="text-gray-400">Test:</span>
+          {QUICK_ACCOUNTS.map((acc, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleQuickFill(acc)}
+              className="px-2 py-1 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 rounded transition-colors border text-gray-600 font-medium"
+            >
+              {acc.label}
+            </button>
+          ))}
+        </div>
+
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? 'Logging in...' : 'Login'}
         </Button>
+
         {role === 'student' && (
           <div className="text-center text-sm">
             <span className="text-muted-foreground">Don't have an account? </span>
