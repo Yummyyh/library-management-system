@@ -299,26 +299,31 @@ exports.getMyLoans = async (req, res, next) => {
 /**
  * 4. 学生查看个人罚款记录 (getMyFines STU-08)
  * 支持状态筛选：all / unpaid / paid
- * 展示：书名、作者、借阅日期、应还日期、逾期天数、罚款金额、缴费状态
+ * 实时动态计算罚金，不修改数据库fineAmount字段
  */
 exports.getMyFines = async (req, res, next) => {
   try {
     const studentId = req.student.id;
     const status = req.query.status;
+    const now = new Date();
+    const DAY_MS = 24 * 60 * 60 * 1000;
 
-    // 基础查询：当前登录学生的借阅记录（产生罚款的记录）
-    const where = {
-      userId: studentId
+    // 基础筛选：只查【未还+已逾期】
+    const baseWhere = {
+      userId: studentId,
+      returnDate: null,
+      dueDate: { lt: now }
     };
 
-    // 按缴费状态筛选
+    // 缴费状态拼接
+    const where = { ...baseWhere };
     if (status === 'unpaid') {
       where.finePaid = false;
     } else if (status === 'paid') {
       where.finePaid = true;
     }
 
-    // 联表查询：借阅 -> 图书册 -> 图书
+    // 查询符合条件的逾期借阅数据
     const loans = await prisma.loan.findMany({
       where,
       include: {
@@ -333,18 +338,20 @@ exports.getMyFines = async (req, res, next) => {
           }
         }
       },
-      orderBy: {
-        checkoutDate: 'desc'
-      }
+      orderBy: { checkoutDate: 'desc' }
     });
 
-    // 格式化数据
-    const now = new Date();
+    // 读取系统配置单日罚金
+    const { getConfigString } = require('../utils/configDefaults');
+    const dailyFine = parseFloat(await getConfigString('DAILY_FINE')) || 0.5;
+
+    // 实时计算：只在返回前端时算金额，不修改数据库
     const list = loans.map(loan => {
       const book = loan.barcode.book;
       // 计算逾期天数
-      const diffTime = now - loan.dueDate;
-      const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const overdueDays = Math.ceil((now - loan.dueDate) / DAY_MS);
+      // 未缴费实时算钱；已缴费沿用库内原有fineAmount
+      const realFine = loan.finePaid ? loan.fineAmount : overdueDays * dailyFine;
 
       return {
         fineId: loan.id,
@@ -353,7 +360,7 @@ exports.getMyFines = async (req, res, next) => {
         checkoutDate: loan.checkoutDate,
         dueDate: loan.dueDate,
         overdueDays: Math.max(0, overdueDays),
-        fineAmount: loan.fineAmount,
+        fineAmount: realFine,
         status: loan.finePaid ? 'paid' : 'unpaid'
       };
     });
