@@ -4,6 +4,7 @@ const { success, error } = require('../utils/response');
 const { toBookDetailPayload } = require('../utils/bookDetail');
 const { assertWithinBorrowLimit, dueDateFromPolicy } = require('../utils/getConfig');
 const prisma = new PrismaClient();
+const { getConfigString } = require('../utils/getConfig');
 
 /** 书目查询字段（与搜索/浏览共用） */
 const bookListSelect = {
@@ -296,6 +297,7 @@ exports.getMyLoans = async (req, res, next) => {
 
 
 
+
 /**
  * 4. 学生查看个人罚款记录 (getMyFines STU-08)
  * 支持状态筛选：all / unpaid / paid
@@ -305,10 +307,33 @@ exports.getMyFines = async (req, res, next) => {
   try {
     const studentId = req.student.id;
     const status = req.query.status;
+    const now = new Date();
 
-    // 基础查询：当前登录学生的借阅记录（产生罚款的记录）
+    // 1. 异步读取系统里最新的每日罚金配置
+    let dailyFineConfig = 0.5;
+    try {
+      const configVal = await getConfigString('DAILY_FINE');
+      if (configVal) dailyFineConfig = parseFloat(configVal);
+    } catch (cfgErr) {
+      console.error('Failed to fetch DAILY_FINE config, fallback to 0.5:', cfgErr);
+    }
+
+    // 2. 基础查询：当前登录学生的借阅记录
     const where = {
-      userId: studentId
+      userId: studentId,
+      OR: [// 过滤条件 A：书还没还，且已经过了应还日期（正处于逾期中）
+        {
+          returnDate: null,
+          dueDate: {
+            lt: now // dueDate < 当前时间
+          }
+        },// 过滤条件 B：数据库中已经记了罚金的记录（包括已还未交钱，或历史欠账）
+        {
+          fineAmount: {
+            gt: 0 // fineAmount > 0
+          }
+        }
+      ]
     };
 
     // 按缴费状态筛选
@@ -318,7 +343,7 @@ exports.getMyFines = async (req, res, next) => {
       where.finePaid = true;
     }
 
-    // 联表查询：借阅 -> 图书册 -> 图书
+    // 联表查询
     const loans = await prisma.loan.findMany({
       where,
       include: {
@@ -338,13 +363,24 @@ exports.getMyFines = async (req, res, next) => {
       }
     });
 
-    // 格式化数据
-    const now = new Date();
+    // 3. 【核心全自动联动】格式化数据 + 动态算钱
     const list = loans.map(loan => {
       const book = loan.barcode.book;
-      // 计算逾期天数
-      const diffTime = now - loan.dueDate;
+      
+      // 计算逾期天数：已归还的按实际归还时间算，没归还的按当前时间动态算
+      const endCompareDate = loan.returnDate ? new Date(loan.returnDate) : now;
+      const diffTime = endCompareDate - new Date(loan.dueDate);
       const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const finalOverdueDays = Math.max(0, overdueDays);
+
+      // 计算罚款金额逻辑：
+      let finalFineAmount = loan.fineAmount;
+
+      if (!loan.returnDate) {
+        finalFineAmount = finalOverdueDays * dailyFineConfig;
+      } else {
+        finalFineAmount = loan.fineAmount;
+      }
 
       return {
         fineId: loan.id,
@@ -352,8 +388,8 @@ exports.getMyFines = async (req, res, next) => {
         bookAuthor: book.author,
         checkoutDate: loan.checkoutDate,
         dueDate: loan.dueDate,
-        overdueDays: Math.max(0, overdueDays),
-        fineAmount: loan.fineAmount,
+        overdueDays: finalOverdueDays,
+        fineAmount: Number(finalFineAmount.toFixed(2)), 
         status: loan.finePaid ? 'paid' : 'unpaid'
       };
     });
@@ -372,6 +408,7 @@ exports.payFine = async (req, res, next) => {
   try {
     const loanId = req.params.id;
     const studentId = req.student.id;
+    const now = new Date(); // 当前交钱的时间戳
 
     // 校验：记录属于当前学生 + 未缴费
     const loan = await prisma.loan.findFirst({
@@ -388,10 +425,30 @@ exports.payFine = async (req, res, next) => {
       return res.json(error('Fine already paid', 400));
     }
 
-    // 更新缴费状态
+
+    // 计算天数差：当前交钱时间 - 应还时间
+    const diffTime = now - new Date(loan.dueDate);
+    const overdueDays = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+    let finalPayAmount = loan.fineAmount;
+    
+    if (!loan.returnDate) {
+    
+      const configVal = await getConfigString('DAILY_FINE');
+      const dailyFineConfig = configVal ? parseFloat(configVal) : 0.5;
+      finalPayAmount = overdueDays * dailyFineConfig;
+    } else {
+    
+      finalPayAmount = loan.fineAmount;
+    }
+
+    // 更新缴费状态，同时把这次算出来的最终金额记录到数据库中
     await prisma.loan.update({
       where: { id: loanId },
-      data: { finePaid: true }
+      data: { 
+        finePaid: true,
+        fineAmount: Number(finalPayAmount.toFixed(2)) 
+      }
     });
 
     return res.json(success({}, 'Payment successful'));
