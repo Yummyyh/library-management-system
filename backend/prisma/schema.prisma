@@ -128,6 +128,8 @@ model Loan {
   finePaid     Boolean   @default(false)
   /// 罚金已豁免
   fineForgiven Boolean   @default(false)
+  /// 续借次数，最多允许 2 次
+  renewCount   Int       @default(0)
   /// 创建时间
   createdAt    DateTime  @default(now())
 

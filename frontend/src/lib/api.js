@@ -180,6 +180,10 @@ export const studentBookAPI = {
       headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
     });
   },
+  renew: (loanId) => request(STUDENT_API_BASE, `/loans/${loanId}/renew`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getStudentToken() || ''}` },
+  }),
 
   // 查询罚款记录
   fines: (status = 'all') => {

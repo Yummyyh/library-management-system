@@ -54,6 +54,8 @@ app.use('/api/student/notifications', notificationRoutes);
 
 // Student hold routes
 const studentAuth = require('./middleware/studentAuth');
+const studentBookController = require('./controllers/studentBookController');
+app.post('/api/student/loans/:id/renew', studentAuth, studentBookController.renewLoan);
 app.post('/api/student/holds', studentAuth, holdController.createHold);
 app.get('/api/student/holds', studentAuth, holdController.listMyHolds);
 app.delete('/api/student/holds/:id', studentAuth, holdController.cancelMyHold);

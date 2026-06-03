@@ -13,6 +13,9 @@ router.get('/search', studentBookController.search);
 // NOTE: Must be registered before "/:id" or "my-loans" is treated as a book id.
 router.get('/my-loans', studentAuth, studentBookController.getMyLoans);
 
+// POST /api/student/books/my-loans/:id/renew - online renewal STU-09
+router.post('/my-loans/:id/renew', studentAuth, studentBookController.renewLoan);
+
 // GET /api/student/books/fine — 查看我的罚款记录 STU-08
 router.get('/fine', studentAuth, studentBookController.getMyFines);
 

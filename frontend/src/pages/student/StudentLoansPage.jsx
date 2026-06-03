@@ -43,11 +43,17 @@ function renderStatusTag(status) {
   );
 }
 
+function canRenew(row) {
+  const maxRenewCount = row.maxRenewCount ?? 2;
+  return row.status === 'borrowed' && (row.renewCount ?? 0) < maxRenewCount;
+}
+
 export default function StudentLoansPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [status, setStatus] = useState('all');
   const [loading, setLoading] = useState(false);
+  const [renewingId, setRenewingId] = useState(null);
   const [rows, setRows] = useState([]);
 
   const handleLogout = () => {
@@ -74,6 +80,26 @@ export default function StudentLoansPage() {
   useEffect(() => {
     loadLoans();
   }, [status]);
+
+  const handleRenew = async (loanId) => {
+    try {
+      setRenewingId(loanId);
+      const result = await studentBookAPI.renew(loanId);
+      toast({
+        title: 'Renewed successfully',
+        description: `New due date: ${formatDate(result?.dueDate)}`,
+      });
+      await loadLoans();
+    } catch (err) {
+      toast({
+        variant: 'destructive',
+        title: 'Renew failed',
+        description: err.message,
+      });
+    } finally {
+      setRenewingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -117,6 +143,7 @@ export default function StudentLoansPage() {
                 <TableHead>Due Date</TableHead>
                 <TableHead>Return Date</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -128,11 +155,29 @@ export default function StudentLoansPage() {
                   <TableCell>{formatDate(row.dueDate)}</TableCell>
                   <TableCell>{formatDate(row.returnDate)}</TableCell>
                   <TableCell>{renderStatusTag(row.status)}</TableCell>
+                  <TableCell className="text-right">
+                    {row.status === 'borrowed' ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRenew(row.loanId)}
+                        disabled={renewingId === row.loanId || !canRenew(row)}
+                      >
+                        {renewingId === row.loanId
+                          ? 'Renewing...'
+                          : canRenew(row)
+                            ? `Renew ${row.renewCount ?? 0}/${row.maxRenewCount ?? 2}`
+                            : `Renewed ${row.renewCount ?? 0}/${row.maxRenewCount ?? 2}`}
+                      </Button>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
               {!loading && rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
                     No loan records found
                   </TableCell>
                 </TableRow>

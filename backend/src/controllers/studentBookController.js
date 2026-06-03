@@ -5,6 +5,7 @@ const { toBookDetailPayload } = require('../utils/bookDetail');
 const { assertWithinBorrowLimit, dueDateFromPolicy } = require('../utils/getConfig');
 const prisma = new PrismaClient();
 const { getConfigString } = require('../utils/getConfig');
+const MAX_RENEW_COUNT = 2;
 
 /** 书目查询字段（与搜索/浏览共用） */
 const bookListSelect = {
@@ -284,12 +285,101 @@ exports.getMyLoans = async (req, res, next) => {
         checkoutDate: loan.checkoutDate,
         dueDate: loan.dueDate,
         returnDate: loan.returnDate,
+        renewCount: loan.renewCount || 0,
+        maxRenewCount: MAX_RENEW_COUNT,
         status: loan.returnDate ? 'returned' : (isOverdue ? 'overdue' : 'borrowed'),
       };
     });
 
     return res.json(success({ list }, 'Loans retrieved'));
   } catch (e) {
+    next(e);
+  }
+};
+
+/**
+ * 3b. Student online renewal (STU-09).
+ * Only active, non-overdue loans owned by the signed-in student can be renewed.
+ */
+exports.renewLoan = async (req, res, next) => {
+  try {
+    const loanId = req.params.id;
+    const studentId = req.student.id;
+    const now = new Date();
+
+    const result = await prisma.$transaction(async (tx) => {
+      const loan = await tx.loan.findFirst({
+        where: {
+          id: loanId,
+          userId: studentId,
+        },
+        include: {
+          barcode: {
+            include: {
+              book: {
+                select: {
+                  title: true,
+                  author: true,
+                  isbn: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!loan) {
+        const err = new Error('Loan record not found');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      if (loan.returnDate) {
+        const err = new Error('Returned loans cannot be renewed');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      if (loan.dueDate < now) {
+        const err = new Error('Overdue loans cannot be renewed');
+        err.statusCode = 409;
+        throw err;
+      }
+
+      if ((loan.renewCount || 0) >= MAX_RENEW_COUNT) {
+        const err = new Error(`Renewal limit reached (${MAX_RENEW_COUNT} times maximum)`);
+        err.statusCode = 409;
+        throw err;
+      }
+
+      const baseDate = loan.dueDate > now ? loan.dueDate : now;
+      const newDueDate = await dueDateFromPolicy(baseDate, { prisma: tx });
+
+      const updated = await tx.loan.update({
+        where: { id: loan.id },
+        data: {
+          dueDate: newDueDate,
+          renewCount: { increment: 1 },
+        },
+      });
+
+      return {
+        loanId: updated.id,
+        dueDate: updated.dueDate,
+        renewCount: updated.renewCount,
+        maxRenewCount: MAX_RENEW_COUNT,
+        bookTitle: loan.barcode.book.title,
+        bookAuthor: loan.barcode.book.author,
+        bookIsbn: loan.barcode.book.isbn,
+        barcode: loan.barcode.barcode,
+      };
+    });
+
+    return res.json(success(result, 'Loan renewed successfully'));
+  } catch (e) {
+    if (e.statusCode) {
+      return res.status(e.statusCode).json(error(e.message, e.statusCode));
+    }
     next(e);
   }
 };

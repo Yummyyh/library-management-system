@@ -1,6 +1,7 @@
 # 🗄 【关键】数据库文件（必须由 seed.js 重建，禁止提交）
 backend/prisma/dev.db
 backend/prisma/dev.db-journal
+backend/prisma/db-backups/
 backend/prisma/*.db
 *.db
 *.sqlite
