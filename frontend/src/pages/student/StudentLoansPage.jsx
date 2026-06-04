@@ -143,7 +143,7 @@ export default function StudentLoansPage() {
                 <TableHead>Due Date</TableHead>
                 <TableHead>Return Date</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

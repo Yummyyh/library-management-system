@@ -21,17 +21,13 @@ export default function StudentDashboard() {
     const [loading, setLoading] = useState(true);
 
     const handleLogout = () => {
+      sessionStorage.removeItem(`notifications_shown_${studentId}`); 
       studentSession.clear();
       window.location.href = '/login';
     };
 
-    const dismissNotifications = async () => {
+    const dismissNotifications = () => {
       setShowNotifications(false);
-      try {
-        await studentNotificationAPI.clearNotifications();
-      } catch (err) {
-        console.error('Failed to clear notifications:', err.message);
-      }
     };
 
     const handleNotificationOpenChange = (open) => {
@@ -49,6 +45,9 @@ export default function StudentDashboard() {
       let cancelled = false;
 
       const fetchNotifications = async () => {
+        // 本次登录已经显示过了，不再弹出
+        if (sessionStorage.getItem(`notifications_shown_${studentId}`)) return;
+
         try {
           setLoading(true);
           const data = await studentNotificationAPI.getNotifications();
@@ -56,6 +55,8 @@ export default function StudentDashboard() {
           if (data?.list?.length > 0) {
             setNotifications(data.list);
             setShowNotifications(true);
+            // 标记本次登录已显示过
+          sessionStorage.setItem(`notifications_shown_${studentId}`, 'true');
           }
         } catch (err) {
           if (!cancelled) {
