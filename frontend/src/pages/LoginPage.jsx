@@ -78,7 +78,7 @@ export default function LoginPage() {
         studentSession.setToken(token);
         studentSession.setStudent(student);
         toast({ title: 'Login Successful', description: `Welcome, ${student.name}` });
-        navigate('/student');
+        navigate('/student/books');
       }
     } catch (err) {
       toast({ variant: 'destructive', title: 'Login Failed', description: err.message });

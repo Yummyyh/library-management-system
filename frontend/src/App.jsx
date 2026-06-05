@@ -29,6 +29,7 @@ import StudentLoansPage from './pages/student/StudentLoansPage'
 import BookDetailPage from './pages/BookDetailPage'
 import StudentFinePage from './pages/student/StudentFinePage'
 import StudentHoldsPage from './pages/student/StudentHoldsPage'
+import StudentLayout from './pages/student/StudentLayout'
 
 // UI 组件
 import { Toaster } from '@/components/ui/toaster'
@@ -121,33 +122,33 @@ function App() {
         {/* 🎓 Student 路由 */}
         <Route path="/student" element={
           <StudentGuard>
-            <StudentDashboard />
+            <StudentLayout><StudentDashboard /></StudentLayout>
           </StudentGuard>
         } />
         <Route path="/student/books" element={
           <StudentGuard>
-            <StudentBooksPage />
+            <StudentLayout><StudentBooksPage /></StudentLayout>
           </StudentGuard>
         } />
         <Route path="/student/books/:bookId" element={
           <StudentGuard>
-            <BookDetailPage />
+            <StudentLayout><BookDetailPage /></StudentLayout>
           </StudentGuard>
         } />
         <Route path="/student/my-loans" element={
-           <StudentGuard>
-            <StudentLoansPage />
-           </StudentGuard>
+          <StudentGuard>
+            <StudentLayout><StudentLoansPage /></StudentLayout>
+          </StudentGuard>
         } />
         <Route path="/student/fine" element={
-           <StudentGuard>
-            <StudentFinePage />
+          <StudentGuard>
+            <StudentLayout><StudentFinePage /></StudentLayout>
           </StudentGuard>
         } />
         <Route path="/student/holds" element={
-           <StudentGuard>
-            <StudentHoldsPage />
-           </StudentGuard>
+          <StudentGuard>
+            <StudentLayout><StudentHoldsPage /></StudentLayout>
+          </StudentGuard>
         } />
 
         {/* 404 处理 */}

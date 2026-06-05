@@ -102,64 +102,80 @@ export default function StudentLoansPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-5xl mx-auto space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">My Loans</h1>
-            <p className="text-sm text-muted-foreground">View your current and historical borrowing records</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => navigate('/student')}>
-              Back
-            </Button>
-            <select
-              className="h-10 rounded-md border px-3 text-sm bg-white"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              {STATUS_OPTIONS.map((item) => (
-                <option key={item.value} value={item.value}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-            <Button variant="outline" onClick={loadLoans} disabled={loading}>
-              Refresh
-            </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
+    /* 外层完全对齐，确保所有子页面的边距和高度完全一致 */
+    <div className="min-h-screen p-6 bg-transparent flex flex-col">
+      
+      {/* 统一的大矩形半透明面板 - 容器本身 overflow-hidden 锁定 */}
+      <div className="max-w-[1920px] w-full mx-auto flex-1 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+        
+        {/* 【固定区域】：标题和筛选交互控制保持在顶部不随动 */}
+        <div className="flex-shrink-0 flex flex-col space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">My Loans</h1>
+              <p className="text-sm text-muted-foreground mt-0.5">View your current and historical borrowing records</p>
+            </div>
+            
+            {/* 统一顶层交互控制组和 Back 按钮样式 */}
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="bg-white/50 backdrop-blur-sm border-gray-200" 
+                onClick={() => navigate('/student')}
+              >
+                Back
+              </Button>
+              <select
+                className="h-10 rounded-md border px-3 text-sm bg-white/50 backdrop-blur-sm border-gray-200"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                {STATUS_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <Button variant="outline" className="bg-white/50 backdrop-blur-sm border-gray-200" onClick={loadLoans} disabled={loading}>
+                Refresh
+              </Button>
+              <Button variant="outline" className="bg-white/50 backdrop-blur-sm border-gray-200" onClick={handleLogout}>
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white overflow-hidden">
+        {/* 【核心滚动区域】：仅让表格部分在内部垂直滑动 */}
+        <div className="flex-1 w-full overflow-y-auto pr-1">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Book Title</TableHead>
-                <TableHead>Author</TableHead>
-                <TableHead>Checkout Date</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Return Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
+            <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 shadow-sm shadow-gray-100/10">
+              <TableRow className="hover:bg-transparent border-b border-gray-200/60">
+                <TableHead className="font-semibold text-gray-700">Book Title</TableHead>
+                <TableHead className="font-semibold text-gray-700">Author</TableHead>
+                <TableHead className="font-semibold text-gray-700">Checkout Date</TableHead>
+                <TableHead className="font-semibold text-gray-700">Due Date</TableHead>
+                <TableHead className="font-semibold text-gray-700">Return Date</TableHead>
+                <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                <TableHead className="text-center font-semibold text-gray-700">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {rows.map((row) => (
-                <TableRow key={row.loanId}>
-                  <TableCell className="font-medium">{row.bookTitle || '-'}</TableCell>
-                  <TableCell>{row.bookAuthor || '-'}</TableCell>
-                  <TableCell>{formatDate(row.checkoutDate)}</TableCell>
-                  <TableCell>{formatDate(row.dueDate)}</TableCell>
-                  <TableCell>{formatDate(row.returnDate)}</TableCell>
-                  <TableCell>{renderStatusTag(row.status)}</TableCell>
-                  <TableCell className="text-right">
+                <TableRow key={row.loanId} className="border-b border-gray-100/40 hover:bg-white/40 transition-colors">
+                  {/* 保持最初设计：不加粗，使用纯净的 text-gray-800 基础字号 */}
+                  <TableCell className="text-gray-800 py-3.5">{row.bookTitle || '-'}</TableCell>
+                  <TableCell className="text-gray-600 py-3.5">{row.bookAuthor || '-'}</TableCell>
+                  <TableCell className="text-gray-600 py-3.5">{formatDate(row.checkoutDate)}</TableCell>
+                  <TableCell className="text-gray-600 py-3.5">{formatDate(row.dueDate)}</TableCell>
+                  <TableCell className="text-gray-600 py-3.5">{formatDate(row.returnDate)}</TableCell>
+                  <TableCell className="py-3.5">{renderStatusTag(row.status)}</TableCell>
+                  <TableCell className="text-center py-3.5">
                     {row.status === 'borrowed' ? (
                       <Button
                         size="sm"
                         variant="outline"
+                        className="bg-white/80 hover:bg-blue-500 hover:text-white transition-colors"
                         onClick={() => handleRenew(row.loanId)}
                         disabled={renewingId === row.loanId || !canRenew(row)}
                       >
@@ -176,7 +192,7 @@ export default function StudentLoansPage() {
                 </TableRow>
               ))}
               {!loading && rows.length === 0 && (
-                <TableRow>
+                <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
                     No loan records found
                   </TableCell>
