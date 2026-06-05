@@ -272,4 +272,35 @@ router.post('/overdue/remind', roleAuth('LIBRARIAN'), async (req, res, next) => 
   }
 });
 
+// 获取借阅列表 /loans
+router.get('/loans', roleAuth('LIBRARIAN'), async (req, res, next) => {
+  try {
+    const { page = 1, size = 10 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(size);
+    const take = parseInt(size);
+
+    const [list, total] = await Promise.all([
+      prisma.loan.findMany({
+        skip,
+        take,
+        orderBy: { checkoutDate: 'desc' },
+        
+        include: {
+          barcode: {
+            include: {
+              book: true,
+            },
+          },
+          user: { select: { id: true, name: true, email: true, studentId: true } },
+        },
+      }),
+      prisma.loan.count(),
+    ]);
+
+    res.json({ data: { list, total } });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

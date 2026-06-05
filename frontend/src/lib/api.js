@@ -279,6 +279,10 @@ export const librarianAPI = {
       headers: { Authorization: `Bearer ${getLibToken() || ''}` },
       body: JSON.stringify({ loanIds }),
     }),
+    loans: (page = 1, size = 10) =>
+    request(LIB_API_BASE, `/loans?page=${page}&size=${size}`, {
+      headers: { Authorization: `Bearer ${getLibToken() || ''}` },
+    }),
 };
 
 export const adminAuthAPI = {
