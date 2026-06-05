@@ -29,11 +29,6 @@ export default function OverduePage() {
 
   const selectedSet = useMemo(() => new Set(selected), [selected]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('librarian_token');
-    navigate('/login');
-  };
-
   const loadOverdue = useCallback(async () => {
     try {
       setLoading(true);
@@ -92,84 +87,78 @@ export default function OverduePage() {
   const allChecked = rows.length > 0 && selected.length === rows.length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold">Overdue List</h1>
-            <p className="text-sm text-muted-foreground">
-              Select rows to send reminders, or send to all overdue records when none are selected.
-            </p>
-          </div>
+    <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden animate-page-fade">
+
+        {/* ========== 固定顶栏 ========== */}
+        <div className="flex-shrink-0 flex justify-between items-center flex-wrap gap-4">
+          <h1 className="text-2xl font-bold text-gray-800">Overdue List</h1>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => navigate('/librarian')}>
-              Back
-            </Button>
-            <Button variant="outline" onClick={loadOverdue} disabled={loading}>
-              Refresh
-            </Button>
-            <Button onClick={sendReminders} disabled={sending || loading || rows.length === 0}>
-              Send Reminder
-            </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/librarian')}>Back</Button>
+            <Button variant="outline" size="sm" onClick={loadOverdue} disabled={loading}>Refresh</Button>
+            <Button size="sm" onClick={sendReminders} disabled={sending || loading || rows.length === 0}>Send Reminder</Button>
           </div>
         </div>
 
-        <div className="rounded-lg border bg-white overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">
-                  <input
-                    type="checkbox"
-                    checked={allChecked}
-                    onChange={(e) => toggleAll(e.target.checked)}
-                    aria-label="Select all"
-                  />
-                </TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Student ID</TableHead>
-                <TableHead>Book</TableHead>
-                <TableHead>Author</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Overdue Days</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.loanId}>
-                  <TableCell>
+        {/* ========== 独立滚动表格区 ========== */}
+        <div className="flex-1 w-full overflow-y-auto pr-1">
+          <div className="border border-gray-100/60 rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 shadow-sm">
+                <TableRow>
+                  <TableHead className="w-12">
                     <input
                       type="checkbox"
-                      checked={selectedSet.has(row.loanId)}
-                      onChange={() => toggleOne(row.loanId)}
-                      aria-label={`Select loan ${row.loanId}`}
+                      className="accent-red-500"
+                      checked={allChecked}
+                      onChange={(e) => toggleAll(e.target.checked)}
+                      aria-label="Select all"
                     />
-                  </TableCell>
-                  <TableCell>{row.student?.name || '-'}</TableCell>
-                  <TableCell>{row.student?.studentId || '-'}</TableCell>
-                  <TableCell className="font-medium">{row.book?.title || '-'}</TableCell>
-                  <TableCell>{row.book?.author || '-'}</TableCell>
-                  <TableCell>{formatDue(row.dueDate)}</TableCell>
-                  <TableCell>
-                    <span className="px-2 py-1 rounded-md text-xs bg-red-100 text-red-700">
-                      {row.overdueDay} day(s)
-                    </span>
-                  </TableCell>
+                  </TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Book</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Overdue Days</TableHead>
                 </TableRow>
-              ))}
-              {!loading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-10">
-                    No overdue records
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {rows.map((row) => (
+                  <TableRow key={row.loanId} className="hover:bg-white/40 transition-colors">
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        className="accent-red-500"
+                        checked={selectedSet.has(row.loanId)}
+                        onChange={() => toggleOne(row.loanId)}
+                        aria-label={`Select loan ${row.loanId}`}
+                      />
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-600">{row.student?.name || '-'}</TableCell>
+                    <TableCell className="text-sm text-gray-500">{row.student?.studentId || '-'}</TableCell>
+                    <TableCell className="text-sm text-gray-600">{row.book?.title || '-'}</TableCell>
+                    <TableCell className="text-sm text-gray-500">{row.book?.author || '-'}</TableCell>
+                    <TableCell className="text-sm text-gray-600">{formatDue(row.dueDate)}</TableCell>
+                    <TableCell>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 border border-red-500/20 shadow-sm">
+                        {row.overdueDay} day(s)
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {!loading && rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-gray-400 py-10 text-sm">
+                      No overdue records
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
+
       </div>
     </div>
   );

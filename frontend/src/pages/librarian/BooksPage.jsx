@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,7 +72,6 @@ const initialForm = {
 };
 
 export default function LibrarianBooksPage() {
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   // List State
@@ -559,387 +557,404 @@ export default function LibrarianBooksPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('librarian_token');
-    navigate('/login');
+  const getGenreStyle = (genre) => {
+    const g = String(genre || '').toLowerCase();
+    if (g.includes('tech')) return 'bg-blue-500/10 text-blue-600 border border-blue-500/10';
+    if (g.includes('sci')) return 'bg-purple-500/10 text-purple-600 border border-purple-500/10';
+    if (g.includes('fic')) return 'bg-pink-500/10 text-pink-600 border border-pink-500/10';
+    if (g.includes('manage')) return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/10';
+    return 'bg-gray-500/10 text-gray-600 border border-gray-500/10';
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header & Actions */}
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <h1 className="text-2xl font-bold">📚 Book Management</h1>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleLogout}>🚪 Logout</Button>
-          <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetFormState(); setOpen(isOpen); }}>
-            <DialogTrigger asChild>
-              <Button>+ Add Book</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingId ? 'Edit Book' : 'Add New Book'}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {!editingId && (
-                  <div className="p-4 border rounded-lg bg-blue-50 space-y-2">
-                    <Label className="text-blue-800">🔍 ISBN Auto-Lookup (Optional)</Label>
-                    <div className="flex gap-2">
-                      <Input value={isbnQuery} onChange={(e) => setIsbnQuery(e.target.value)} placeholder="Enter ISBN" onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), fetchBookByISBN())} />
-                      <Button type="button" variant="secondary" onClick={fetchBookByISBN} disabled={fetchingISBN}>{fetchingISBN ? 'Searching...' : 'Fetch'}</Button>
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Title *</Label>
-                    <Input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Author *</Label>
-                    <Input required value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>ISBN *</Label>
-                    <Input required value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Genre *</Label>
-                    <Input value={form.genre} onChange={(e) => setForm({ ...form, genre: e.target.value })} placeholder="Technology/Fiction/..." />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Custom Category</Label>
-                    <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Optional" />
-                  </div>
-                  {!editingId && (
-                    <div className="grid gap-2">
-                      <Label>Copy Count *</Label>
-                      <Input type="number" min={1} required value={form.copyCount} onChange={(e) => setForm({ ...form, copyCount: parseInt(e.target.value) || 1 })} />
-                    </div>
-                  )}
-                </div>
-                {!editingId && form.copyCount > 0 && form.isbn && (
-                  <div className="flex justify-end">
-                    <Button type="button" variant="outline" size="sm" onClick={generateBarcodePreview} className="text-blue-600">🔍 Preview Barcodes ({form.copyCount})</Button>
-                  </div>
-                )}
-                <div className="grid gap-2">
-                  <Label>Description</Label>
-                  <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Language</Label>
-                    <Input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} placeholder="English" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Shelf Location</Label>
-                    <Input value={form.shelfLocation} onChange={(e) => setForm({ ...form, shelfLocation: e.target.value })} placeholder="Tech-A1" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => { resetFormState(); setOpen(false); }}>Cancel</Button>
-                  <Button type="submit">{editingId ? 'Save' : 'Create'}</Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+    <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden animate-page-fade">
 
-      {/* Search Bar */}
-      <div className="flex gap-2 max-w-lg">
-        <Input placeholder="Search by title/author/ISBN" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchBooks(keyword)} />
-        <Button onClick={() => fetchBooks(keyword)}>Search</Button>
-      </div>
-
-      {/* Books Table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>ISBN</TableHead>
-              <TableHead>Genre</TableHead>
-              <TableHead>Available</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8">Loading...</TableCell></TableRow>
-            ) : books.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8">{keyword ? 'No results' : 'No books yet'}</TableCell></TableRow>
-            ) : (
-              books.map((book) => (
-                <Fragment key={book.id}>
-                  {/* 主行：点击整行触发展开 */}
-                  <TableRow 
-                    className="cursor-pointer hover:bg-muted/50 transition-colors" 
-                    onClick={() => handleToggleExpand(book)}
-                  >
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        {expandedRowIds.includes(book.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                        {book.title}
+        {/* ========== 固定顶栏 ========== */}
+        <div className="flex-shrink-0 space-y-4">
+          {/* 标题 + 操作按钮 */}
+          <div className="flex justify-between items-center flex-wrap gap-4">
+            <h1 className="text-2xl font-bold text-gray-800">Book Management</h1>
+            <div className="flex items-center gap-2">
+              <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) resetFormState(); setOpen(isOpen); }}>
+                <DialogTrigger asChild>
+                  <Button>+ Add Book</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>{editingId ? 'Edit Book' : 'Add New Book'}</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {!editingId && (
+                      <div className="p-4 border rounded-lg bg-emerald-50/60 space-y-2">
+                        <Label className="text-emerald-700">🔍 ISBN Auto-Lookup (Optional)</Label>
+                        <div className="flex gap-2">
+                          <Input value={isbnQuery} onChange={(e) => setIsbnQuery(e.target.value)} placeholder="Enter ISBN" onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), fetchBookByISBN())} />
+                          <Button type="button" variant="secondary" onClick={fetchBookByISBN} disabled={fetchingISBN}>{fetchingISBN ? 'Searching...' : 'Fetch'}</Button>
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{book.author}</TableCell>
-                    <TableCell className="text-xs">{book.isbn}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs">{book.genre}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`font-bold ${(book.availableCount ?? 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {book.availableCount ?? 0}
-                      </span>
-                    </TableCell>
-                    {/* Actions 列：阻止事件冒泡，防止点击按钮时触发展开 */}
-                    <TableCell className="space-x-2" onClick={(e) => e.stopPropagation()}>
-                      <Button size="sm" variant="outline" onClick={() => handleViewBarcodes(book)}>🔍 Barcodes</Button>
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(book)}>Edit</Button>
-                      <Button size="sm" variant="destructive" onClick={() => handleDelete(book)}>Remove</Button>
-                    </TableCell>
-                  </TableRow>
-
-                  {/* ✅ 修改：展开行改为列表布局，一个条形码占一整行 */}
-                  {expandedRowIds.includes(book.id) && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="bg-slate-50/50 p-6">
-                        {loadingExpandedIds.includes(book.id) ? (
-                          <div className="text-center text-muted-foreground py-4">Loading barcodes...</div>
-                        ) : expandedBookDataMap[book.id]?.barcodes?.length > 0 ? (
-                          <ul className="divide-y rounded-md border text-sm bg-white w-full">
-                            {expandedBookDataMap[book.id].barcodes.map((bc) => (
-                              <li 
-                                key={bc.id || bc.barcode} 
-                                className="flex justify-between items-center gap-4 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
-                                onClick={() => handleZoomBarcode(book.id, bc.id, bc.barcode)}
-                                title="Click to zoom"
-                              >
-                                <div className="flex items-center gap-6 flex-1">
-                                  {/* 隐藏的 canvas 用于生成条形码 */}
-                                  <canvas id={`canvas-${book.id}-${bc.id}`} className="hidden" />
-                                  {/* 显示的 img 标签，增加边框和背景使其更清晰 */}
-                                  <img id={`img-${book.id}-${bc.id}`} alt={bc.barcode} className="h-10 w-48 object-contain bg-white border rounded p-1 shadow-sm" />
-                                  <span className="font-mono truncate text-xs text-muted-foreground" title={bc.barcode}>
-                                    {bc.barcode}
-                                  </span>
-                                </div>
-                                {/* 状态标签 */}
-                                <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
-                                  bc.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                                }`}>
-                                  {bc.status}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <div className="text-center text-muted-foreground py-4">No barcodes found.</div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </Fragment>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* ✅ Updated: Barcode Details Dialog with Selection */}
-      <Dialog open={barcodeDialogOpen} onOpenChange={(isOpen) => { if(!isOpen) setSelectedBarcodes([]); setBarcodeDialogOpen(isOpen); }}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              📖 {selectedBook?.title}
-              <span className="block text-sm font-normal text-muted-foreground mt-1">
-                Select barcodes to print or manage
-              </span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            {loadingBarcodes ? (
-              <p className="text-center py-4 text-muted-foreground">Loading barcodes...</p>
-            ) : barcodeList.length > 0 ? (
-              <>
-                <div className="border rounded-md">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <input 
-                            type="checkbox" 
-                            checked={barcodeList.length > 0 && selectedBarcodes.length === barcodeList.length}
-                            onChange={(e) => toggleSelectAll(e.target.checked)}
-                          />
-                        </TableHead>
-                        <TableHead>Barcode</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {barcodeList.map((bc) => (
-                        <TableRow key={bc.id} className={selectedBarcodes.some(s => s.id === bc.id) ? "bg-blue-50" : ""}>
-                          <TableCell>
-                            <input 
-                              type="checkbox" 
-                              checked={selectedBarcodes.some(s => s.id === bc.id)}
-                              onChange={(e) => toggleSelectBarcode(bc, e.target.checked)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">{bc.barcode}</TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded text-xs ${bc.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{bc.status}</span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                <div className="flex justify-between items-center mt-4 p-2 bg-gray-50 rounded">
-                  <span className="text-sm text-muted-foreground">Selected: {selectedBarcodes.length} items</span>
-                  <div className="flex gap-2">
-                    {/* ✅ 新增：加入暂存区按钮 */}
-                    <Button variant="secondary" onClick={addToPrintQueue} disabled={selectedBarcodes.length === 0}>
-                      ➕ Add to Queue
-                    </Button>
-                    {/* 保留原有功能：直接打印 */}
-                    <Button onClick={handlePrintSelectedBarcodes} disabled={selectedBarcodes.length === 0}>
-                      🖨️ Print Selected
-                    </Button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-center text-muted-foreground py-4">No barcodes found.</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Barcode Preview Dialog (Existing) */}
-      <Dialog open={showBarcodePreview} onOpenChange={setShowBarcodePreview}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>📊 Barcode Preview - {form.title}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-              {previewBarcodeList.map((bc) => (
-                <div key={bc.id} className="border rounded-lg p-4 text-center bg-white shadow-sm">
-                  <canvas id={`preview-canvas-${bc.id}`} />
-                  <p className="text-xs font-mono mt-2">{bc.barcode}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowBarcodePreview(false)}>Close</Button>
-              <Button onClick={printPreviewBarcodes}>🖨️ Print All</Button>
+                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label>Title *</Label>
+                        <Input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Author *</Label>
+                        <Input required value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>ISBN *</Label>
+                        <Input required value={form.isbn} onChange={(e) => setForm({ ...form, isbn: e.target.value })} />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Genre *</Label>
+                        <Input value={form.genre} onChange={(e) => setForm({ ...form, genre: e.target.value })} placeholder="Technology/Fiction/..." />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Custom Category</Label>
+                        <Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Optional" />
+                      </div>
+                      {!editingId && (
+                        <div className="grid gap-2">
+                          <Label>Copy Count *</Label>
+                          <Input type="number" min={1} required value={form.copyCount} onChange={(e) => setForm({ ...form, copyCount: parseInt(e.target.value) || 1 })} />
+                        </div>
+                      )}
+                    </div>
+                    {!editingId && form.copyCount > 0 && form.isbn && (
+                      <div className="flex justify-end">
+                        <Button type="button" variant="outline" size="sm" onClick={generateBarcodePreview} className="text-emerald-600">🔍 Preview Barcodes ({form.copyCount})</Button>
+                      </div>
+                    )}
+                    <div className="grid gap-2">
+                      <Label>Description</Label>
+                      <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="grid gap-2">
+                        <Label>Language</Label>
+                        <Input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} placeholder="English" />
+                      </div>
+                      <div className="grid gap-2">
+                        <Label>Shelf Location</Label>
+                        <Input value={form.shelfLocation} onChange={(e) => setForm({ ...form, shelfLocation: e.target.value })} placeholder="Tech-A1" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => { resetFormState(); setOpen(false); }}>Cancel</Button>
+                      <Button type="submit">{editingId ? 'Save' : 'Create'}</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
 
-      {/* ✅ 放大查看遮罩层 (Lightbox) */}
-      {zoomedImageData && (
-        <div 
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm" 
-          onClick={() => setZoomedImageData(null)} // 点击空白区域关闭
-        >
-          <div className="bg-white p-8 rounded-xl shadow-2xl flex flex-col items-center max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Barcode Detail</h3>
-            <img src={zoomedImageData} alt="Zoomed Barcode" className="w-full h-auto mb-4 border rounded p-2 bg-gray-50" />
-            <p className="text-xl font-mono text-gray-800 mb-6">{zoomedBarcodeText}</p>
-            <Button variant="outline" onClick={() => setZoomedImageData(null)}>Close</Button>
+          {/* 搜索栏 */}
+          <div className="flex gap-2 max-w-lg">
+            <Input placeholder="Search by title/author/ISBN" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchBooks(keyword)} />
+            <Button onClick={() => fetchBooks(keyword)}>Search</Button>
           </div>
         </div>
-      )}
 
-      {/* ✅ 新增：左下角悬浮按钮 (FAB) */}
-      <div className="fixed bottom-8 left-8 z-50">
-        <Button 
-          size="lg" 
-          className="rounded-full shadow-lg h-14 w-14 p-0 flex items-center justify-center relative bg-blue-600 hover:bg-blue-700"
-          onClick={() => setQueueOpen(true)}
-        >
-          🖨️
-          {printQueue.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center border-2 border-white">
-              {printQueue.length}
-            </span>
-          )}
-        </Button>
-      </div>
-
-      {/* ✅ 新增：打印暂存区 Dialog */}
-      <Dialog open={queueOpen} onOpenChange={setQueueOpen}>
-        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>🖨️ Print Queue (暂存区)</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            {printQueue.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>Queue is empty.</p>
-                <p className="text-sm mt-2">Open book details and click "Add to Queue" to add barcodes.</p>
-              </div>
-            ) : (
-              <>
-                <div className="border rounded-md mb-4">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <input 
-                            type="checkbox" 
-                            checked={printQueue.length > 0 && queueSelectedIds.length === printQueue.length}
-                            onChange={(e) => toggleQueueSelectAll(e.target.checked)}
-                          />
-                        </TableHead>
-                        <TableHead>Book Title</TableHead>
-                        <TableHead>Barcode</TableHead>
+        {/* ========== 内部滚动表格区域 ========== */}
+        <div className="flex-1 w-full overflow-y-auto pr-1">
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 shadow-sm shadow-gray-100/10">
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>ISBN</TableHead>
+                  <TableHead>Genre</TableHead>
+                  <TableHead>Available</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-sm text-gray-500">Loading...</TableCell></TableRow>
+                ) : books.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-sm text-gray-500">{keyword ? 'No results' : 'No books yet'}</TableCell></TableRow>
+                ) : (
+                  books.map((book) => (
+                    <Fragment key={book.id}>
+                      <TableRow
+                        className="cursor-pointer hover:bg-white/40 transition-colors"
+                        onClick={() => handleToggleExpand(book)}
+                      >
+                        <TableCell className="text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            {expandedRowIds.includes(book.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            {book.title}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">{book.author}</TableCell>
+                        <TableCell className="text-xs text-gray-500">{book.isbn}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs ${getGenreStyle(book.genre)}`}>{book.genre}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`text-sm ${(book.availableCount ?? 0) === 0 ? 'text-red-600' : 'text-green-600'}`}>
+                            {book.availableCount ?? 0}
+                          </span>
+                        </TableCell>
+                        <TableCell className="space-x-2" onClick={(e) => e.stopPropagation()}>
+                          <Button size="sm" variant="outline" onClick={() => handleViewBarcodes(book)}>Barcodes</Button>
+                          <Button size="sm" variant="outline" onClick={() => handleEdit(book)}>Edit</Button>
+                          <Button size="sm" variant="destructive" onClick={() => handleDelete(book)}>Remove</Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {printQueue.map((item) => (
-                        <TableRow key={item.barcode} className={queueSelectedIds.includes(item.barcode) ? "bg-blue-50" : ""}>
-                          <TableCell>
-                            <input 
-                              type="checkbox" 
-                              checked={queueSelectedIds.includes(item.barcode)}
-                              onChange={(e) => toggleQueueSelect(item.barcode, e.target.checked)}
-                            />
+
+                      {expandedRowIds.includes(book.id) && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="bg-slate-50/50 p-6">
+                            {loadingExpandedIds.includes(book.id) ? (
+                              <div className="text-center text-muted-foreground py-4 text-sm">Loading barcodes...</div>
+                            ) : expandedBookDataMap[book.id]?.barcodes?.length > 0 ? (
+                              <ul className="divide-y rounded-md border text-sm bg-white w-full">
+                                {expandedBookDataMap[book.id].barcodes.map((bc) => (
+                                  <li
+                                    key={bc.id || bc.barcode}
+                                    className="flex justify-between items-center gap-4 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    onClick={() => handleZoomBarcode(book.id, bc.id, bc.barcode)}
+                                    title="Click to zoom"
+                                  >
+                                    <div className="flex items-center gap-6 flex-1">
+                                      <canvas id={`canvas-${book.id}-${bc.id}`} className="hidden" />
+                                      <img id={`img-${book.id}-${bc.id}`} alt={bc.barcode} className="h-10 w-48 object-contain bg-white border rounded p-1 shadow-sm" />
+                                      <span className="font-mono truncate text-xs text-muted-foreground" title={bc.barcode}>
+                                        {bc.barcode}
+                                      </span>
+                                    </div>
+                                    <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                                      bc.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                    }`}>
+                                      {bc.status}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <div className="text-center text-muted-foreground py-4 text-sm">No barcodes found.</div>
+                            )}
                           </TableCell>
-                          <TableCell className="text-sm truncate max-w-[250px]" title={item.bookTitle}>
-                            {item.bookTitle}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">{item.barcode}</TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border">
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={removeSelectedFromQueue} disabled={queueSelectedIds.length === 0}>
-                      🗑️ Remove Selected ({queueSelectedIds.length})
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={clearQueue} disabled={printQueue.length === 0}>
-                      ❌ Clear All
-                    </Button>
-                  </div>
-                  <Button onClick={printFromQueue} disabled={queueSelectedIds.length === 0} className="bg-blue-600 hover:bg-blue-700">
-                    🖨️ Print Selected ({queueSelectedIds.length})
-                  </Button>
-                </div>
-              </>
-            )}
+                      )}
+                    </Fragment>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+
+        {/* ========== Barcode Details Dialog ========== */}
+        <Dialog open={barcodeDialogOpen} onOpenChange={(isOpen) => { if(!isOpen) setSelectedBarcodes([]); setBarcodeDialogOpen(isOpen); }}>
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedBook?.title}
+                <span className="block text-sm font-normal text-muted-foreground mt-1">
+                  Select barcodes to print or manage
+                </span>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              {loadingBarcodes ? (
+                <p className="text-center py-4 text-muted-foreground">Loading barcodes...</p>
+              ) : barcodeList.length > 0 ? (
+                <>
+                  <div className="border rounded-md">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10">
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <input
+                              type="checkbox"
+                              checked={barcodeList.length > 0 && selectedBarcodes.length === barcodeList.length}
+                              onChange={(e) => toggleSelectAll(e.target.checked)}
+                            />
+                          </TableHead>
+                          <TableHead>Barcode</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {barcodeList.map((bc) => (
+                          <TableRow key={bc.id} className={selectedBarcodes.some(s => s.id === bc.id) ? "bg-emerald-50/60" : ""}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                checked={selectedBarcodes.some(s => s.id === bc.id)}
+                                onChange={(e) => toggleSelectBarcode(bc, e.target.checked)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{bc.barcode}</TableCell>
+                            <TableCell>
+                              <span className={`px-2 py-1 rounded text-xs ${bc.status === 'AVAILABLE' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{bc.status}</span>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="flex justify-between items-center mt-4 p-2 bg-gray-50 rounded">
+                    <span className="text-sm text-muted-foreground">Selected: {selectedBarcodes.length} items</span>
+                    <div className="flex gap-2">
+                      <Button variant="secondary" onClick={addToPrintQueue} disabled={selectedBarcodes.length === 0}>
+                        ➕ Add to Queue
+                      </Button>
+                      <Button onClick={handlePrintSelectedBarcodes} disabled={selectedBarcodes.length === 0}>
+                        🖨️ Print Selected
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-center text-muted-foreground py-4">No barcodes found.</p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* ========== Barcode Preview Dialog ========== */}
+        <Dialog open={showBarcodePreview} onOpenChange={setShowBarcodePreview}>
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Barcode Preview - {form.title}</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                {previewBarcodeList.map((bc) => (
+                  <div key={bc.id} className="border rounded-lg p-4 text-center bg-white shadow-sm">
+                    <canvas id={`preview-canvas-${bc.id}`} />
+                    <p className="text-xs font-mono mt-2">{bc.barcode}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowBarcodePreview(false)}>Close</Button>
+                <Button onClick={printPreviewBarcodes}>🖨️ Print All</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* ========== 放大查看遮罩层 (Lightbox) ========== */}
+        {zoomedImageData && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setZoomedImageData(null)}
+          >
+            <div className="bg-white p-8 rounded-xl shadow-2xl flex flex-col items-center max-w-lg w-full" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">Barcode Detail</h3>
+              <img src={zoomedImageData} alt="Zoomed Barcode" className="w-full h-auto mb-4 border rounded p-2 bg-gray-50" />
+              <p className="text-xl font-mono text-gray-800 mb-6">{zoomedBarcodeText}</p>
+              <Button variant="outline" onClick={() => setZoomedImageData(null)}>Close</Button>
+            </div>
+          </div>
+        )}
+
+        {/* ========== 打印暂存区 FAB ========== */}
+        <div className="fixed bottom-6 left-6 z-50">
+          <Button
+            className="p-3 bg-white/60 hover:bg-white/90 backdrop-blur-md rounded-full shadow-md border border-white/40 text-emerald-600 hover:text-emerald-700 transition-all duration-150 flex items-center justify-center"
+            onClick={() => setQueueOpen(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect width="12" height="8" x="6" y="14"/><line x1="6" x2="18" y1="18" y2="18"/></svg>
+            {printQueue.length > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">
+                {printQueue.length}
+              </span>
+            )}
+          </Button>
+        </div>
+
+        {/* ========== 打印暂存区 Dialog ========== */}
+        <Dialog open={queueOpen} onOpenChange={setQueueOpen}>
+          <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-white/50">
+            <DialogHeader>
+              <DialogTitle>Print Queue</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              {printQueue.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>Queue is empty.</p>
+                  <p className="text-sm mt-2">Open book details and click "Add to Queue" to add barcodes.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="border border-gray-100/60 rounded-xl mb-4 overflow-hidden">
+                    <Table>
+                      <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10">
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <input
+                              type="checkbox"
+                              className="accent-emerald-600"
+                              checked={printQueue.length > 0 && queueSelectedIds.length === printQueue.length}
+                              onChange={(e) => toggleQueueSelectAll(e.target.checked)}
+                            />
+                          </TableHead>
+                          <TableHead>Book Title</TableHead>
+                          <TableHead>Barcode</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {printQueue.map((item) => (
+                          <TableRow key={item.barcode} className={queueSelectedIds.includes(item.barcode) ? "bg-emerald-50/60" : ""}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                className="accent-emerald-600"
+                                checked={queueSelectedIds.includes(item.barcode)}
+                                onChange={(e) => toggleQueueSelect(item.barcode, e.target.checked)}
+                              />
+                            </TableCell>
+                            <TableCell className="text-sm truncate max-w-[250px]" title={item.bookTitle}>
+                              {item.bookTitle}
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{item.barcode}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="flex justify-between items-center p-3 bg-gray-50/60 rounded-xl border border-gray-100/60">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={removeSelectedFromQueue}
+                        disabled={queueSelectedIds.length === 0}
+                        className="px-4 py-2 text-sm text-gray-600 bg-white/60 hover:bg-white/90 border border-gray-200/60 rounded-xl shadow-sm transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Remove Selected ({queueSelectedIds.length})
+                      </button>
+                      <button
+                        onClick={clearQueue}
+                        disabled={printQueue.length === 0}
+                        className="px-4 py-2 text-sm text-gray-600 bg-white/60 hover:bg-white/90 border border-gray-200/60 rounded-xl shadow-sm transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <button
+                      onClick={printFromQueue}
+                      disabled={queueSelectedIds.length === 0}
+                      className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 rounded-xl shadow-sm shadow-emerald-500/5 transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Print Selected ({queueSelectedIds.length})
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+      </div>
     </div>
   );
 }

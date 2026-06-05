@@ -98,7 +98,7 @@ export default function BookDetailPage() {
   }, [book]);
 
   const handleLogout = mode === 'librarian'
-    ? () => { localStorage.removeItem('librarian_token'); navigate('/login'); }
+    ? () => { localStorage.removeItem('librarian_token'); localStorage.removeItem('student_info'); navigate('/login'); }
     : () => { studentSession.clear(); navigate('/login'); };
 
   if (loading) return <div className="p-6 max-w-3xl mx-auto space-y-4"><p className="text-muted-foreground">Loading book details…</p></div>;

@@ -30,6 +30,7 @@ import BookDetailPage from './pages/BookDetailPage'
 import StudentFinePage from './pages/student/StudentFinePage'
 import StudentHoldsPage from './pages/student/StudentHoldsPage'
 import StudentLayout from './pages/student/StudentLayout'
+import LibrarianLayout from './layouts/LibrarianLayout'
 
 // UI 组件
 import { Toaster } from '@/components/ui/toaster'
@@ -85,37 +86,37 @@ function App() {
         {/* 📖 Librarian 路由 */}
         <Route path="/librarian" element={
           <LibrarianGuard>
-            <LibrarianDashboard />
+            <LibrarianLayout><LibrarianDashboard /></LibrarianLayout>
           </LibrarianGuard>
         } />
         <Route path="/librarian/borrow" element={
           <LibrarianGuard>
-            <BorrowBook />
+            <LibrarianLayout><BorrowBook /></LibrarianLayout>
           </LibrarianGuard>
         } />
         <Route path="/librarian/return" element={
           <LibrarianGuard>
-            <ReturnBook />
+            <LibrarianLayout><ReturnBook /></LibrarianLayout>
           </LibrarianGuard>
         } />
         <Route path="/librarian/books" element={
           <LibrarianGuard>
-            <LibrarianBooksPage />
+            <LibrarianLayout><LibrarianBooksPage /></LibrarianLayout>
           </LibrarianGuard>
         } />
         <Route path="/librarian/books/:bookId" element={
           <LibrarianGuard>
-            <BookDetailPage />
+            <LibrarianLayout><BookDetailPage /></LibrarianLayout>
           </LibrarianGuard>
         } />
         <Route path="/librarian/overdue" element={
           <LibrarianGuard>
-            <OverduePage />
+            <LibrarianLayout><OverduePage /></LibrarianLayout>
           </LibrarianGuard>
         } />
         <Route path="/librarian/holds" element={
           <LibrarianGuard>
-            <LibrarianHoldsPage />
+            <LibrarianLayout><LibrarianHoldsPage /></LibrarianLayout>
           </LibrarianGuard>
         } />
 

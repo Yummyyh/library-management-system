@@ -6,6 +6,7 @@ import LibrarianBackground from '@/components/ui/LibrarianBackground';
 export default function LibrarianDashboard() {
     const handleLogout = () => {
       localStorage.removeItem('librarian_token');
+      localStorage.removeItem('student_info');
       window.location.href = '/login';
     };
   

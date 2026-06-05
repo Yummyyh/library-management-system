@@ -71,6 +71,7 @@ export default function LoginPage() {
       } else if (role === 'librarian') {
         const { token, user } = await librarianAuthAPI.login({ email: form.email, password: form.password });
         localStorage.setItem('librarian_token', token);
+        studentSession.setStudent(user);
         toast({ title: 'Login Successful', description: `Welcome, ${user.name}` });
         navigate('/librarian');
       } else if (role === 'student') {
