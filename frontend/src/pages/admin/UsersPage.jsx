@@ -1,6 +1,4 @@
-// frontend/src/pages/admin/UsersPage.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +19,6 @@ const initialForm = {
 };
 
 export default function UsersPage() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,25 +84,27 @@ export default function UsersPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    toast({ title: 'Logged Out' });
-    navigate('/login');
-  };
-
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">👥 User Management</h1>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={handleLogout}>🚪 Logout</Button>
+    <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full min-h-0 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+
+        {/* Fixed header area */}
+        <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">Manage users, roles, and accounts</p>
+          </div>
+
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setForm(initialForm); setEditingId(null); }}>
+              <Button
+                onClick={() => { setForm(initialForm); setEditingId(null); }}
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 active:scale-[0.98] rounded-xl shadow-md transition-all duration-150"
+              >
                 + Add User
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] bg-white/95 backdrop-blur-md rounded-2xl border border-white/50">
               <DialogHeader>
                 <DialogTitle>{editingId ? 'Edit User' : 'Create New User'}</DialogTitle>
               </DialogHeader>
@@ -140,63 +139,80 @@ export default function UsersPage() {
                   </div>
                 )}
                 <div className="flex justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                  <Button type="submit">{editingId ? 'Save' : 'Create'}</Button>
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}
+                    className="bg-white/60 hover:bg-white/90 border border-gray-200/60 text-gray-600 rounded-xl">
+                    Cancel
+                  </Button>
+                  <Button type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 active:scale-[0.98] rounded-xl shadow-md transition-all duration-150">
+                    {editingId ? 'Save' : 'Create'}
+                  </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
         </div>
-      </div>
 
-      {/* User list table */}
-      <div className="border rounded-lg">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Student ID</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8">Loading...</TableCell></TableRow>
-            ) : users.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8">No users yet</TableCell></TableRow>
-            ) : (
-              users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.studentId}</TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      user.role === 'ADMIN' ? 'bg-red-100 text-red-700' :
-                      user.role === 'LIBRARIAN' ? 'bg-blue-100 text-blue-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>{user.role}</span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      user.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                    }`}>{user.status === 'ACTIVE' ? '✅ Active' : '⏸ Deactivated'}</span>
-                  </TableCell>
-                  <TableCell className="space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(user)}>Edit</Button>
-                    <Button size="sm" variant={user.status === 'ACTIVE' ? 'destructive' : 'default'}
-                      onClick={() => handleToggleStatus(user)}>
-                      {user.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                    </Button>
-                  </TableCell>
+        {/* Scrollable table area */}
+        <div className="flex-1 w-full overflow-y-auto pr-1">
+          <div className="border border-gray-100/60 rounded-xl overflow-hidden">
+            <Table>
+              <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 shadow-sm">
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Student ID</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">Loading users...</TableCell></TableRow>
+                ) : users.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground">No users yet</TableCell></TableRow>
+                ) : (
+                  users.map((user) => (
+                    <TableRow key={user.id} className="border-b border-gray-100/40 hover:bg-white/40 transition-colors">
+                      <TableCell className="font-medium text-gray-800">{user.name}</TableCell>
+                      <TableCell className="text-gray-600">{user.email}</TableCell>
+                      <TableCell className="text-gray-600">{user.studentId}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                          user.role === 'ADMIN' ? 'bg-red-100 text-red-700' :
+                          user.role === 'LIBRARIAN' ? 'bg-blue-100 text-blue-700' :
+                          'bg-green-100 text-green-700'
+                        }`}>{user.role}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                          user.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}>{user.status === 'ACTIVE' ? '✅ Active' : '⏸ Deactivated'}</span>
+                      </TableCell>
+                      <TableCell className="space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(user)}
+                          className="bg-white/60 hover:bg-white/90 border border-gray-200/60 text-gray-600 rounded-lg text-xs">
+                          Edit
+                        </Button>
+                        <Button size="sm"
+                          variant={user.status === 'ACTIVE' ? 'destructive' : 'default'}
+                          onClick={() => handleToggleStatus(user)}
+                          className={user.status === 'ACTIVE'
+                            ? 'px-3 py-1 text-xs font-medium rounded-lg'
+                            : 'px-3 py-1 text-xs font-medium text-white bg-purple-500 hover:bg-purple-600 active:scale-[0.98] rounded-lg shadow-sm transition-all duration-150'
+                          }>
+                          {user.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
       </div>
     </div>
   );

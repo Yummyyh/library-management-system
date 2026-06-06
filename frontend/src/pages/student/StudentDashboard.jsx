@@ -167,20 +167,37 @@ export default function StudentDashboard() {
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {notifications.map((notif, idx) => {
                 const isOverdue = notif.type === 'OVERDUE';
-                const isHoldReady = notif.type === 'HOLD_READY';
+                const isHoldReady = notif.type === 'HOLD_READY' || notif.type === 'READY';
                 const isHoldCancelled = notif.type === 'HOLD_CANCELLED';
-                const bgClass = isOverdue ? 'bg-red-50 border-red-200' :
-                  isHoldReady ? 'bg-green-50 border-green-200' :
-                  isHoldCancelled ? 'bg-gray-50 border-gray-200' :
-                  'bg-blue-50 border-blue-200';
-                const textClass = isOverdue ? 'text-red-800' :
-                  isHoldReady ? 'text-green-800' :
-                  isHoldCancelled ? 'text-gray-600' :
-                  'text-blue-800';
+
+                const bgClass = isOverdue
+                  ? 'bg-red-50/80 border-red-200/60'
+                  : isHoldReady
+                  ? 'bg-emerald-50/80 border-emerald-200/60'
+                  : isHoldCancelled
+                  ? 'bg-amber-50/80 border-amber-200/60'
+                  : 'bg-blue-50/80 border-blue-200/60';
+
+                const textClass = isOverdue
+                  ? 'text-red-800'
+                  : isHoldReady
+                  ? 'text-emerald-800'
+                  : isHoldCancelled
+                  ? 'text-amber-800'
+                  : 'text-blue-800';
+
+                const title = isOverdue
+                  ? 'Overdue Reminder'
+                  : isHoldReady
+                  ? 'Reservation Ready'
+                  : isHoldCancelled
+                  ? 'Reservation Cancelled'
+                  : notif.title || 'Notification';
+
                 return (
-                  <div key={idx} className={`p-3 border rounded-lg ${bgClass}`}>
-                    <p className={`text-sm font-medium ${textClass}`}>{notif.title}</p>
-                    <p className={`text-sm mt-1 ${textClass}`}>{notif.message}</p>
+                  <div key={idx} className={`p-3.5 rounded-xl border text-sm shadow-sm ${bgClass}`}>
+                    <p className={`text-sm font-medium ${textClass}`}>{title}</p>
+                    <p className={`text-xs mt-1 opacity-90 leading-relaxed ${textClass}`}>{notif.message}</p>
                   </div>
                 );
               })}

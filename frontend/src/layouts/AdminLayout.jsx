@@ -1,36 +1,32 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { studentSession } from '@/lib/studentSession';
-import StudentBackground from '@/components/ui/StudentBackground';
+import AdminBackground from '@/components/ui/AdminBackground';
 
 const navItems = [
-  { label: 'Browse Books', path: '/student/books' },
-  { label: 'My Borrowing History', path: '/student/my-loans' },
-  { label: 'My Reservations', path: '/student/holds' },
-  { label: 'My Fines', path: '/student/fine' },
+  { label: 'User Management', path: '/admin/users' },
+  { label: 'System Settings', path: '/admin/settings' },
 ];
 
-export default function StudentLayout({ children }) {
+export default function AdminLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const student = studentSession.getStudent();
-  const studentId = student?.id;
+  const user = studentSession.getStudent();
 
   const handleLogout = () => {
-    sessionStorage.removeItem(`notifications_shown_${studentId}`);
+    localStorage.removeItem('admin_token');
     studentSession.clear();
     navigate('/login');
   };
 
   return (
     <div className="flex min-h-screen">
-      <StudentBackground className="pointer-events-none" />
+      <AdminBackground className="pointer-events-none" />
 
-      {/* Sidebar */}
+      {/* Sidebar — pixel-perfect frosted glass, aligned with Librarian/Student */}
       <aside className="w-56 bg-white/40 backdrop-blur-md flex flex-col m-3 rounded-2xl shadow-sm fixed top-0 left-0 h-[calc(100vh-24px)] z-20">
         <div className="px-6 py-6 border-b border-white/50">
-          <h1 className="text-xl font-bold text-gray-800">Student</h1>
-
-          <p className="text-xs text-gray-400 mt-1">{student?.studentId}</p>
+          <h1 className="text-lg font-bold text-gray-800">Admin</h1>
+          <p className="text-xs text-gray-400 mt-1">{user?.studentId || 'ADMIN-MODE'}</p>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
@@ -38,10 +34,9 @@ export default function StudentLayout({ children }) {
             const isActive = location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path}>
-               
                 <div className={`flex items-center px-4 py-2.5 rounded-xl text-sm font-medium border transition-all duration-150
                   ${isActive
-                    ? 'bg-blue-600/10 text-blue-700 border-white/20 shadow-sm shadow-blue-500/5'
+                    ? 'bg-purple-600/10 text-purple-700 border-white/20 shadow-sm shadow-purple-500/5'
                     : 'text-gray-600 border-transparent hover:bg-white/40 hover:text-gray-900'
                   }`}>
                   {item.label}
@@ -51,9 +46,8 @@ export default function StudentLayout({ children }) {
           })}
         </nav>
 
-        {/* 左下角区域：字号加大，且整体往上平移 5mm */}
         <div className="px-5 pt-4 pb-8 border-t border-white/50 flex flex-col justify-end">
-          <p className="text-base font-semibold text-gray-700 leading-none">{student?.name}</p>
+          <p className="text-base font-semibold text-gray-700 leading-none">{user?.name || 'Administrator'}</p>
           <button
             onClick={handleLogout}
             className="mt-2.5 text-sm text-gray-400 hover:text-red-500 transition-colors text-left w-fit"
@@ -63,8 +57,8 @@ export default function StudentLayout({ children }) {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="ml-56 flex-1 min-h-0 relative z-10 animate-in fade-in duration-200">
+      {/* Main Content — deliberately NO key={location.pathname} to prevent sidebar flicker */}
+      <main className="ml-56 flex-1 min-h-0 relative z-10">
         {children}
       </main>
     </div>

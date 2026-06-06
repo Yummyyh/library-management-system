@@ -24,7 +24,7 @@ export default function LibrarianLayout({ children }) {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gradient-to-br from-emerald-100 via-emerald-50 to-teal-100">
       <LibrarianBackground className="pointer-events-none" />
 
       {/* Sidebar - 像素级对齐的毛玻璃侧边栏 */}
@@ -43,7 +43,7 @@ export default function LibrarianLayout({ children }) {
               <Link key={item.path} to={item.path}>
                 <div className={`flex items-center px-4 py-2.5 rounded-xl text-sm font-medium border transition-all duration-150
                   ${isActive
-                    ? 'bg-blue-600/10 text-blue-700 border-white/20 shadow-sm shadow-blue-500/5'
+                    ? 'bg-emerald-600/10 text-emerald-700 border-white/20 shadow-sm shadow-emerald-500/5'
                     : 'text-gray-600 border-transparent hover:bg-white/40 hover:text-gray-900'
                   }`}>
                   {item.label}
@@ -66,7 +66,7 @@ export default function LibrarianLayout({ children }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="ml-56 flex-1 relative z-10">
+      <main className="ml-56 flex-1 min-h-0 relative z-10">
         {children}
       </main>
     </div>

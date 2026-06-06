@@ -9,12 +9,10 @@ import './App.css'
 import LoginPage from './pages/LoginPage'
 
 // Admin 页面
-import AdminDashboard from './pages/admin/AdminDashboard'
 import UsersPage from './pages/admin/UsersPage'
 import SettingsPage from './pages/admin/SettingsPage'
 
 // Librarian 页面
-import LibrarianDashboard from './pages/librarian/LibrarianDashboard'
 import BorrowBook from './pages/librarian/BorrowBook'
 import ReturnBook from './pages/librarian/ReturnBook'
 import LibrarianBooksPage from './pages/librarian/BooksPage' // 对应文件名 BooksPage.jsx
@@ -31,6 +29,7 @@ import StudentFinePage from './pages/student/StudentFinePage'
 import StudentHoldsPage from './pages/student/StudentHoldsPage'
 import StudentLayout from './pages/student/StudentLayout'
 import LibrarianLayout from './layouts/LibrarianLayout'
+import AdminLayout from './layouts/AdminLayout'
 
 // UI 组件
 import { Toaster } from '@/components/ui/toaster'
@@ -68,17 +67,17 @@ function App() {
         {/* 👑 Admin 路由 */}
         <Route path="/admin" element={
           <AdminGuard>
-            <AdminDashboard />
+            <Navigate to="/admin/users" replace />
           </AdminGuard>
         } />
         <Route path="/admin/users" element={
           <AdminGuard>
-            <UsersPage />
+            <AdminLayout><UsersPage /></AdminLayout>
           </AdminGuard>
         } />
         <Route path="/admin/settings" element={
           <AdminGuard>
-            <SettingsPage />
+            <AdminLayout><SettingsPage /></AdminLayout>
           </AdminGuard>
         } />
         {/* ✅ 已移除 /admin/books，Admin 不再有图书管理权限 */}
@@ -86,7 +85,7 @@ function App() {
         {/* 📖 Librarian 路由 */}
         <Route path="/librarian" element={
           <LibrarianGuard>
-            <LibrarianLayout><LibrarianDashboard /></LibrarianLayout>
+            <Navigate to="/librarian/books" replace />
           </LibrarianGuard>
         } />
         <Route path="/librarian/borrow" element={

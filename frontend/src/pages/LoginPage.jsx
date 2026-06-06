@@ -91,8 +91,8 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-gray-50">
       <LoginBackground className="pointer-events-none" />
-      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-md space-y-6 border rounded-xl bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-center">📚 Library Login</h1>
+      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-md space-y-6 bg-white/80 backdrop-blur-md rounded-2xl border border-white/40 shadow-xl p-8">
+        <h1 className="text-2xl font-bold text-center">Library Login</h1>
         
         <div className="grid gap-2">
           <Label>Role</Label>
@@ -101,9 +101,9 @@ export default function LoginPage() {
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="student">🎓 Student</SelectItem>
-              <SelectItem value="librarian">📖 Librarian</SelectItem>
-              <SelectItem value="admin">👑 Administrator</SelectItem>
+              <SelectItem value="student">Student</SelectItem>
+              <SelectItem value="librarian">Librarian</SelectItem>
+              <SelectItem value="admin">Administrator</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -141,22 +141,21 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* 新增：测试快捷标签 */}
-        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs border-t border-dashed">
-          <span className="text-gray-400">Test:</span>
+        {/* 测试快捷标签 — 极致弱化 */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
           {QUICK_ACCOUNTS.map((acc, idx) => (
             <button
               key={idx}
               type="button"
               onClick={() => handleQuickFill(acc)}
-              className="px-2 py-1 bg-gray-100 hover:bg-blue-50 hover:text-blue-600 rounded transition-colors border text-gray-600 font-medium"
+              className="opacity-20 hover:opacity-100 text-[10px] text-gray-400 px-2 py-0.5 border border-gray-200/40 rounded transition-all"
             >
               {acc.label}
             </button>
           ))}
         </div>
 
-        <Button type="submit" className="w-full" disabled={submitting}>
+        <Button type="submit" className="w-full px-4 py-2 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 active:scale-[0.98] rounded-xl shadow-md transition-all duration-150" disabled={submitting}>
           {submitting ? 'Logging in...' : 'Login'}
         </Button>
 

@@ -1,6 +1,4 @@
-// frontend/src/pages/admin/SettingsPage.jsx
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-// [修改] 仅使用 configAPI；不再直接 request('/audit')，避免漏传 admin_token 触发 api.js 误登出
 import { configAPI } from '@/lib/api';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -94,7 +91,7 @@ function validateGeneralSettings(form) {
 
 function StatusPanel({ label, value, positive }) {
   return (
-    <div className="rounded-lg border bg-gray-50 p-4">
+    <div className="rounded-lg border border-gray-100/60 bg-gray-50/60 p-4">
       <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
       <p className={`mt-1 text-sm font-medium ${positive ? 'text-green-700' : 'text-gray-800'}`}>
         {value}
@@ -104,7 +101,6 @@ function StatusPanel({ label, value, positive }) {
 }
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [form, setForm] = useState(INITIAL_FORM);
   const [backup, setBackup] = useState(DEFAULT_BACKUP);
@@ -120,7 +116,6 @@ export default function SettingsPage() {
   const loadAuditLog = useCallback(async () => {
     try {
       setAuditLoading(true);
-      // [修改] 走 configAPI.getAuditLog()，自动附带 admin_token（见 lib/api.js）
       const data = await configAPI.getAuditLog();
       setAuditLog(data.list || []);
     } catch (err) {
@@ -133,7 +128,6 @@ export default function SettingsPage() {
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      // [修改] 使用 configAPI.getAll() 替代未实现的裸 request，并携带 admin_token
       const data = await configAPI.getAll();
       setForm(listToForm(data.list));
       setBackup(loadBackupSettings());
@@ -222,263 +216,274 @@ export default function SettingsPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token');
-    toast({ title: 'Logged Out' });
-    navigate('/login');
-  };
-
   if (loading) {
     return (
-      <div className="p-6">
-        <p className="text-center py-12 text-muted-foreground">Loading...</p>
+      <div className="h-screen flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">Loading system settings...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-3xl mx-auto">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">System Settings</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            <Link to="/admin" className="hover:underline">← Back to Dashboard</Link>
-          </p>
+    <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full min-h-0 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+
+        {/* Title bar — pure text, no Logout / back link */}
+        <div className="flex-shrink-0">
+          <h1 className="text-2xl font-bold text-gray-800">System Settings</h1>
+          <p className="text-sm text-muted-foreground mt-1">Configure library policies and preferences</p>
         </div>
-        <Button variant="outline" onClick={handleLogout}>🚪 Logout</Button>
-      </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
-        {/* US25 — General Settings */}
-        <section className="border rounded-lg bg-white p-6 space-y-4">
-          <h2 className="text-lg font-semibold">General Settings</h2>
-          <div className="grid gap-2">
-            <Label htmlFor="system-name">System Name</Label>
-            <Input
-              id="system-name"
-              value={form.SYSTEM_NAME}
-              onChange={(e) => updateField('SYSTEM_NAME', e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label>Language</Label>
-            <Select value={form.LANGUAGE} onValueChange={(v) => updateField('LANGUAGE', v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                {LANGUAGE_OPTIONS.map((lang) => (
-                  <SelectItem key={lang} value={lang}>{lang}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label>Time Zone</Label>
-            <Select value={form.TIMEZONE} onValueChange={(v) => updateField('TIMEZONE', v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select time zone" />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONE_OPTIONS.map((tz) => (
-                  <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </section>
+        {/* Scrollable form content — independent scroll layer */}
+        <div className="flex-1 w-full overflow-y-auto pr-1 min-h-0">
+          <form onSubmit={handleSave} className="space-y-6">
 
-        {/* US26 — Borrowing Limits */}
-        <section className="border rounded-lg bg-white p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Borrowing Limits</h2>
-          <div className="grid gap-2">
-            <Label htmlFor="max-books">Max Books</Label>
-            <Input
-              id="max-books"
-              type="number"
-              min="1"
-              step="1"
-              value={form.BORROW_LIMIT}
-              onChange={(e) => updateField('BORROW_LIMIT', e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="borrow-days">Borrow Days</Label>
-            <Input
-              id="borrow-days"
-              type="number"
-              min="1"
-              step="1"
-              value={form.BORROW_DAYS}
-              onChange={(e) => updateField('BORROW_DAYS', e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="daily-fine">Daily Fine</Label>
-            <Input
-              id="daily-fine"
-              type="number"
-              min="0"
-              step="0.01"
-              value={form.DAILY_FINE}
-              onChange={(e) => updateField('DAILY_FINE', e.target.value)}
-            />
-          </div>
-          {validationError && (
-            <p className="text-sm text-red-600 font-medium">{validationError}</p>
-          )}
-        </section>
+            {/* US25 — General Settings */}
+            <section className="border border-gray-100/60 rounded-xl bg-white/60 p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">General Settings</h2>
+              <div className="grid gap-2">
+                <Label htmlFor="system-name">System Name</Label>
+                <Input
+                  id="system-name"
+                  className="bg-white/60 border-gray-200"
+                  value={form.SYSTEM_NAME}
+                  onChange={(e) => updateField('SYSTEM_NAME', e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Language</Label>
+                <Select value={form.LANGUAGE} onValueChange={(v) => updateField('LANGUAGE', v)}>
+                  <SelectTrigger className="bg-white/60 border-gray-200">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGE_OPTIONS.map((lang) => (
+                      <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Time Zone</Label>
+                <Select value={form.TIMEZONE} onValueChange={(v) => updateField('TIMEZONE', v)}>
+                  <SelectTrigger className="bg-white/60 border-gray-200">
+                    <SelectValue placeholder="Select time zone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONE_OPTIONS.map((tz) => (
+                      <SelectItem key={tz} value={tz}>{tz}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </section>
 
-        {/* US26 — Borrowing Rule Simulator */}
-        <section className="border rounded-lg bg-white p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Borrowing Rule Simulator</h2>
-          <p className="text-sm text-muted-foreground">
-            Enter a student&apos;s current loan count to check eligibility against the configured limit.
-          </p>
-          <StatusPanel
-            label="Configured Max Books (BORROW_LIMIT)"
-            value={maxBooks > 0 ? String(maxBooks) : '—'}
-            positive={false}
-          />
-          <div className="grid gap-2">
-            <Label htmlFor="current-loans">Current Loans</Label>
-            <Input
-              id="current-loans"
-              type="number"
-              min="0"
-              step="1"
-              value={currentLoans}
-              onChange={(e) => {
-                setCurrentLoans(e.target.value);
-                setSimulatorResult(null);
-              }}
-            />
-          </div>
-          <Button type="button" variant="outline" onClick={handleValidateRule}>
-            Validate Rule
-          </Button>
-          {simulatorResult && (
-            <div className="rounded-lg border p-4 space-y-2">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide">Validation Result</p>
-              <p
-                className={`text-sm font-medium ${
-                  simulatorResult === 'Allowed' ? 'text-green-700' : 'text-red-600'
-                }`}
-              >
-                {simulatorResult}
-              </p>
+            {/* US26 — Borrowing Limits */}
+            <section className="border border-gray-100/60 rounded-xl bg-white/60 p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">Borrowing Limits</h2>
+              <div className="grid gap-2">
+                <Label htmlFor="max-books">Max Books</Label>
+                <Input
+                  id="max-books"
+                  type="number"
+                  min="1"
+                  step="1"
+                  className="bg-white/60 border-gray-200"
+                  value={form.BORROW_LIMIT}
+                  onChange={(e) => updateField('BORROW_LIMIT', e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="borrow-days">Borrow Days</Label>
+                <Input
+                  id="borrow-days"
+                  type="number"
+                  min="1"
+                  step="1"
+                  className="bg-white/60 border-gray-200"
+                  value={form.BORROW_DAYS}
+                  onChange={(e) => updateField('BORROW_DAYS', e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="daily-fine">Daily Fine</Label>
+                <Input
+                  id="daily-fine"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="bg-white/60 border-gray-200"
+                  value={form.DAILY_FINE}
+                  onChange={(e) => updateField('DAILY_FINE', e.target.value)}
+                />
+              </div>
+              {validationError && (
+                <p className="text-sm text-red-600 font-medium">{validationError}</p>
+              )}
+            </section>
+
+            {/* US26 — Borrowing Rule Simulator */}
+            <section className="border border-gray-100/60 rounded-xl bg-white/60 p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">Borrowing Rule Simulator</h2>
               <p className="text-sm text-muted-foreground">
-                Current loans: {currentLoans} / Max: {maxBooks > 0 ? maxBooks : '—'}
+                Enter a student&apos;s current loan count to check eligibility against the configured limit.
               </p>
+              <StatusPanel
+                label="Configured Max Books (BORROW_LIMIT)"
+                value={maxBooks > 0 ? String(maxBooks) : '—'}
+                positive={false}
+              />
+              <div className="grid gap-2">
+                <Label htmlFor="current-loans">Current Loans</Label>
+                <Input
+                  id="current-loans"
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="bg-white/60 border-gray-200"
+                  value={currentLoans}
+                  onChange={(e) => {
+                    setCurrentLoans(e.target.value);
+                    setSimulatorResult(null);
+                  }}
+                />
+              </div>
+              <Button type="button" variant="outline" onClick={handleValidateRule}
+                className="bg-white/60 hover:bg-white/90 border border-gray-200/60 text-gray-600 rounded-xl">
+                Validate Rule
+              </Button>
+              {simulatorResult && (
+                <div className="rounded-lg border border-gray-100/60 p-4 space-y-2 bg-white/40">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Validation Result</p>
+                  <p
+                    className={`text-sm font-medium ${
+                      simulatorResult === 'Allowed' ? 'text-green-700' : 'text-red-600'
+                    }`}
+                  >
+                    {simulatorResult}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Current loans: {currentLoans} / Max: {maxBooks > 0 ? maxBooks : '—'}
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* US27 — Backup Settings */}
+            <section className="border border-gray-100/60 rounded-xl bg-white/60 p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">Backup Settings</h2>
+              <div className="flex items-center gap-3">
+                <input
+                  id="auto-backup"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 accent-purple-500"
+                  checked={backup.autoBackup}
+                  onChange={(e) => updateBackup({ autoBackup: e.target.checked })}
+                />
+                <Label htmlFor="auto-backup" className="cursor-pointer">Auto Backup</Label>
+              </div>
+              <div className="grid gap-2">
+                <Label>Frequency</Label>
+                <Select
+                  value={backup.frequency}
+                  onValueChange={(v) => updateBackup({ frequency: v })}
+                  disabled={!backup.autoBackup}
+                >
+                  <SelectTrigger className="bg-white/60 border-gray-200">
+                    <SelectValue placeholder="Select frequency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BACKUP_FREQUENCY_OPTIONS.map((freq) => (
+                      <SelectItem key={freq} value={freq}>{freq}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="backup-time">Backup Time</Label>
+                <Input
+                  id="backup-time"
+                  type="time"
+                  className="bg-white/60 border-gray-200"
+                  value={backup.backupTime}
+                  onChange={(e) => updateBackup({ backupTime: e.target.value })}
+                  disabled={!backup.autoBackup}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-white/60 hover:bg-white/90 border border-gray-200/60 text-gray-600 rounded-xl"
+                onClick={handleRunBackup}
+                disabled={runningBackup}
+              >
+                {runningBackup ? 'Running Backup...' : 'Run Backup Now'}
+              </Button>
+              <div className="grid gap-3 md:grid-cols-3">
+                <StatusPanel label="Last Backup Status" value={backup.lastBackupStatus} positive={false} />
+                <StatusPanel
+                  label="Backup Verification Passed"
+                  value={backup.verificationPassed ? 'Yes' : 'No'}
+                  positive={backup.verificationPassed}
+                />
+                <StatusPanel
+                  label="Recovery Test Passed"
+                  value={backup.recoveryTestPassed ? 'Yes' : 'No'}
+                  positive={backup.recoveryTestPassed}
+                />
+              </div>
+            </section>
+
+            {/* Feature 9 — Configuration Audit Log */}
+            <section className="border border-gray-100/60 rounded-xl bg-white/60 p-6 space-y-4">
+              <h2 className="text-lg font-semibold text-gray-800">Configuration Audit Log</h2>
+              <p className="text-sm text-muted-foreground">
+                Recent configuration changes (newest first).
+              </p>
+              {auditLoading ? (
+                <p className="text-sm text-muted-foreground">Loading audit log...</p>
+              ) : auditLog.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No configuration changes recorded yet.</p>
+              ) : (
+                <div className="border border-gray-100/60 rounded-xl overflow-hidden">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 shadow-sm">
+                      <TableRow>
+                        <TableHead>Time</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Configuration</TableHead>
+                        <TableHead>Old Value</TableHead>
+                        <TableHead>New Value</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {auditLog.map((entry, index) => (
+                        <TableRow key={`${entry.timestamp}-${entry.configKey}-${index}`}>
+                          <TableCell>{formatAuditTime(entry.timestamp)}</TableCell>
+                          <TableCell>{entry.user}</TableCell>
+                          <TableCell>{entry.configKey}</TableCell>
+                          <TableCell>{entry.oldValue || '—'}</TableCell>
+                          <TableCell>{entry.newValue}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </section>
+
+            {/* Save button — primary action, purple to match sidebar accent */}
+            <div className="flex justify-end pb-2">
+              <Button type="submit" disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-500 hover:bg-purple-600 active:scale-[0.98] rounded-xl shadow-md transition-all duration-150">
+                {saving ? 'Saving...' : 'Save Changes'}
+              </Button>
             </div>
-          )}
-        </section>
 
-        {/* US27 — Backup Settings */}
-        <section className="border rounded-lg bg-white p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Backup Settings</h2>
-          <div className="flex items-center gap-3">
-            <input
-              id="auto-backup"
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300"
-              checked={backup.autoBackup}
-              onChange={(e) => updateBackup({ autoBackup: e.target.checked })}
-            />
-            <Label htmlFor="auto-backup" className="cursor-pointer">Auto Backup</Label>
-          </div>
-          <div className="grid gap-2">
-            <Label>Frequency</Label>
-            <Select
-              value={backup.frequency}
-              onValueChange={(v) => updateBackup({ frequency: v })}
-              disabled={!backup.autoBackup}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                {BACKUP_FREQUENCY_OPTIONS.map((freq) => (
-                  <SelectItem key={freq} value={freq}>{freq}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="backup-time">Backup Time</Label>
-            <Input
-              id="backup-time"
-              type="time"
-              value={backup.backupTime}
-              onChange={(e) => updateBackup({ backupTime: e.target.value })}
-              disabled={!backup.autoBackup}
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleRunBackup}
-            disabled={runningBackup}
-          >
-            {runningBackup ? 'Running Backup...' : 'Run Backup Now'}
-          </Button>
-          <div className="grid gap-3 md:grid-cols-3">
-            <StatusPanel label="Last Backup Status" value={backup.lastBackupStatus} positive={false} />
-            <StatusPanel
-              label="Backup Verification Passed"
-              value={backup.verificationPassed ? 'Yes' : 'No'}
-              positive={backup.verificationPassed}
-            />
-            <StatusPanel
-              label="Recovery Test Passed"
-              value={backup.recoveryTestPassed ? 'Yes' : 'No'}
-              positive={backup.recoveryTestPassed}
-            />
-          </div>
-        </section>
-
-        {/* Feature 9 — Configuration Audit Log */}
-        <section className="border rounded-lg bg-white p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Configuration Audit Log</h2>
-          <p className="text-sm text-muted-foreground">
-            Recent configuration changes (newest first).
-          </p>
-          {auditLoading ? (
-            <p className="text-sm text-muted-foreground">Loading audit log...</p>
-          ) : auditLog.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No configuration changes recorded yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Time</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Configuration</TableHead>
-                  <TableHead>Old Value</TableHead>
-                  <TableHead>New Value</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {auditLog.map((entry, index) => (
-                  <TableRow key={`${entry.timestamp}-${entry.configKey}-${index}`}>
-                    <TableCell>{formatAuditTime(entry.timestamp)}</TableCell>
-                    <TableCell>{entry.user}</TableCell>
-                    <TableCell>{entry.configKey}</TableCell>
-                    <TableCell>{entry.oldValue || '—'}</TableCell>
-                    <TableCell>{entry.newValue}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </section>
-
-        <div className="flex justify-end">
-          <Button type="submit" disabled={saving}>
-            {saving ? 'Saving...' : 'Save Changes'}
-          </Button>
+          </form>
         </div>
-      </form>
+
+      </div>
     </div>
   );
 }

@@ -1,52 +1,40 @@
-// frontend/src/pages/admin/AdminDashboard.jsx
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import AdminBackground from '@/components/ui/AdminBackground';
-// ... existing imports ...
+
 export default function AdminDashboard() {
-    const handleLogout = () => {
-      localStorage.removeItem('admin_token');
-      window.location.href = '/login';
-    };
-  
-    return (
-      // 外层加 relative，背景加 pointer-events-none，内容加 relative z-10
-      <div className="relative min-h-screen bg-gray-50 p-6">
-        <AdminBackground className="pointer-events-none" />
-        <div className="relative z-10 max-w-4xl mx-auto space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold">👑 Admin Dashboard</h1>
-              <p className="text-muted-foreground mt-1">System Administration Panel</p>
-            </div>
-            <Button variant="outline" onClick={handleLogout}>
-              🚪 Logout
-            </Button>
-          </div>
-          {/* Function Cards */}
+  return (
+    <div className="h-full p-6 bg-transparent flex flex-col justify-start overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+
+        {/* Header — pure text, no Logout button */}
+        <div className="flex-shrink-0">
+          <h1 className="text-2xl font-bold text-gray-800">👑 Admin Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">System Administration Panel</p>
+        </div>
+
+        {/* Function Cards — scrollable if content overflows */}
+        <div className="flex-1 w-full overflow-y-auto pr-1">
           <div className="grid gap-6 md:grid-cols-1">
             <Link to="/admin/users">
-              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6 border border-gray-100/60 rounded-xl bg-white/60 hover:shadow-lg hover:bg-white/90 transition-all duration-150 cursor-pointer">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center text-2xl">
+                  <div className="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center text-2xl">
                     👥
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">User Management</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">User Management</h2>
                     <p className="text-sm text-muted-foreground">Manage users, roles, and accounts</p>
                   </div>
                 </div>
               </div>
             </Link>
             <Link to="/admin/settings">
-              <div className="p-6 border rounded-xl bg-white hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="p-6 border border-gray-100/60 rounded-xl bg-white/60 hover:shadow-lg hover:bg-white/90 transition-all duration-150 cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-lg bg-amber-100 flex items-center justify-center text-2xl">
                     ⚙️
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">System Settings</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">System Settings</h2>
                     <p className="text-sm text-muted-foreground">Configure library policies and preferences</p>
                   </div>
                 </div>
@@ -54,6 +42,8 @@ export default function AdminDashboard() {
             </Link>
           </div>
         </div>
+
       </div>
-    );
-  }
+    </div>
+  );
+}

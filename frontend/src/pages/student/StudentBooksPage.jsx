@@ -418,21 +418,37 @@ export default function StudentBooksPage() {
             <DialogTitle className="text-lg font-bold text-gray-800">Notifications</DialogTitle>
           </DialogHeader>
           <div className="max-h-[300px] overflow-y-auto space-y-3 my-2 pr-1">
-            {notifications.map((n, idx) => (
-              <div
-                key={n.id || idx}
-                className={`p-3.5 rounded-xl border text-sm shadow-sm transition-all ${
-                  n.type === 'READY'
-                    ? 'bg-green-50/70 border-green-200/60 text-green-900'
-                    : 'bg-amber-50/70 border-amber-200/60 text-amber-900'
-                }`}
-              >
-                <div className="font-semibold mb-1">
-                  {n.type === 'READY' ? 'Reservation Ready' : 'Reservation Cancelled'}
+            {notifications.map((n, idx) => {
+              const isOverdue = n.type === 'OVERDUE';
+              const isHoldReady = n.type === 'HOLD_READY' || n.type === 'READY';
+              const isHoldCancelled = n.type === 'HOLD_CANCELLED';
+
+              const bgClass = isOverdue
+                ? 'bg-red-50/80 border-red-200/60 text-red-900'
+                : isHoldReady
+                ? 'bg-emerald-50/80 border-emerald-200/60 text-emerald-900'
+                : isHoldCancelled
+                ? 'bg-amber-50/80 border-amber-200/60 text-amber-900'
+                : 'bg-blue-50/80 border-blue-200/60 text-blue-900';
+
+              const title = isOverdue
+                ? 'Overdue Reminder'
+                : isHoldReady
+                ? 'Reservation Ready'
+                : isHoldCancelled
+                ? 'Reservation Cancelled'
+                : n.title || 'Notification';
+
+              return (
+                <div
+                  key={n.id || idx}
+                  className={`p-3.5 rounded-xl border text-sm shadow-sm transition-all ${bgClass}`}
+                >
+                  <div className="font-semibold mb-1">{title}</div>
+                  <div className="text-xs opacity-90 leading-relaxed">{n.message}</div>
                 </div>
-                <div className="text-xs opacity-90 leading-relaxed">{n.message}</div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <DialogFooter>
             <Button onClick={dismissNotifications} className="w-full sm:w-auto">

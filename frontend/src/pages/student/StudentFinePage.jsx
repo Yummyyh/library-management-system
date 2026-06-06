@@ -121,11 +121,9 @@ export default function StudentFinePage() {
   }, [status]);
 
   return (
-    /* 1. 移除 bg-gray-50，换成 bg-transparent 让全局渐变底色透出来 */
+
     <div className="min-h-screen bg-transparent p-6 flex flex-col">
       
-      {/* 2. 核心大矩形：使用 max-w-[1920px] 变宽减少拖动，
-           同时用 bg-white/80 backdrop-blur-md 打造和左侧配套的单一毛玻璃大面板 */}
       <div className="max-w-[1920px] w-full mx-auto flex-1 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-6">
         
         {/* 头部区域 */}
@@ -158,8 +156,7 @@ export default function StudentFinePage() {
           </div>
         </div>
 
-        {/* 3. 表格区域：移除了原本的 rounded-lg border bg-white overflow-hidden，
-             使其完全变透明，无缝融入到外层的半透明大矩形框中 */}
+
         <div className="w-full overflow-x-auto">
           <Table>
             <TableHeader>

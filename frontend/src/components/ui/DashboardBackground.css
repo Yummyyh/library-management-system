@@ -226,7 +226,7 @@
   
   /* ========== 馆员背景 - 淡薄荷奶绿（中饱和度，动态元素显眼） ========== */
   .librarian-bg {
-    background: linear-gradient(135deg, #d4f7e5 0%, #cdf2dd 30%, #d8f5e5 60%, #e2f8ec 100%);
+    background: linear-gradient(135deg, #6ee7b7 0%, #a7f3d0 25%, #6ee7b7 55%, #99f6e4 85%, #ccfbf1 100%);
   }
 
   .library-building {
