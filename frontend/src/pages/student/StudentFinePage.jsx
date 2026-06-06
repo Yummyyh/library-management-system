@@ -124,7 +124,7 @@ export default function StudentFinePage() {
 
     <div className="min-h-screen bg-transparent p-6 flex flex-col">
       
-      <div className="max-w-[1920px] w-full mx-auto flex-1 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-6">
+      <div className="max-w-[1920px] w-full mx-auto flex-1 bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-6">
         
         {/* 头部区域 */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -86,7 +86,7 @@ export default function UsersPage() {
 
   return (
     <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
-      <div className="max-w-[1920px] w-full mx-auto h-full min-h-0 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full min-h-0 bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
 
         {/* Fixed header area */}
         <div className="flex-shrink-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -104,7 +104,7 @@ export default function UsersPage() {
                 + Add User
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] bg-white/95 backdrop-blur-md rounded-2xl border border-white/50">
+            <DialogContent className="sm:max-w-[500px] bg-white/95 backdrop-blur-[4px] rounded-2xl border border-white/50">
               <DialogHeader>
                 <DialogTitle>{editingId ? 'Edit User' : 'Create New User'}</DialogTitle>
               </DialogHeader>

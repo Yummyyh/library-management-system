@@ -568,7 +568,7 @@ export default function LibrarianBooksPage() {
 
   return (
     <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
-      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden animate-page-fade">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden animate-page-fade">
 
         {/* ========== 固定顶栏 ========== */}
         <div className="flex-shrink-0 space-y-4">
@@ -860,7 +860,7 @@ export default function LibrarianBooksPage() {
         {/* ========== 打印暂存区 FAB ========== */}
         <div className="fixed bottom-6 left-6 z-50">
           <Button
-            className="p-3 bg-white/60 hover:bg-white/90 backdrop-blur-md rounded-full shadow-md border border-white/40 text-emerald-600 hover:text-emerald-700 transition-all duration-150 flex items-center justify-center"
+            className="p-3 bg-white/60 hover:bg-white/90 backdrop-blur-[4px] rounded-full shadow-md border border-white/40 text-emerald-600 hover:text-emerald-700 transition-all duration-150 flex items-center justify-center"
             onClick={() => setQueueOpen(true)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 12H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2"/><rect width="12" height="8" x="6" y="14"/><line x1="6" x2="18" y1="18" y2="18"/></svg>
@@ -874,7 +874,7 @@ export default function LibrarianBooksPage() {
 
         {/* ========== 打印暂存区 Dialog ========== */}
         <Dialog open={queueOpen} onOpenChange={setQueueOpen}>
-          <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-white/50">
+          <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto bg-white/90 backdrop-blur-[4px] rounded-2xl shadow-xl border border-white/50">
             <DialogHeader>
               <DialogTitle>Print Queue</DialogTitle>
             </DialogHeader>

@@ -28,7 +28,7 @@ export default function LibrarianLayout({ children }) {
       <LibrarianBackground className="pointer-events-none" />
 
       {/* Sidebar - 像素级对齐的毛玻璃侧边栏 */}
-      <aside className="w-56 bg-white/40 backdrop-blur-md flex flex-col m-3 rounded-2xl shadow-sm fixed top-0 left-0 h-[calc(100vh-24px)] z-20">
+      <aside className="w-56 bg-white/40 backdrop-blur-[4px] flex flex-col m-3 rounded-2xl shadow-sm fixed top-0 left-0 h-[calc(100vh-24px)] z-20">
         <div className="px-6 py-6 border-b border-white/50">
           {/* 纯净标题，去掉了 Portal 后缀 */}
           <h1 className="text-lg font-bold text-gray-800">Librarian</h1>

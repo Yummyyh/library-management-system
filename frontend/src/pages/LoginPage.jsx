@@ -91,7 +91,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-gray-50">
       <LoginBackground className="pointer-events-none" />
-      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-md space-y-6 bg-white/80 backdrop-blur-md rounded-2xl border border-white/40 shadow-xl p-8">
+      <form onSubmit={onSubmit} className="relative z-10 w-full max-w-md space-y-6 bg-white/90 backdrop-blur-[4px] rounded-2xl border border-white/40 shadow-xl p-8">
         <h1 className="text-2xl font-bold text-center">Library Login</h1>
         
         <div className="grid gap-2">

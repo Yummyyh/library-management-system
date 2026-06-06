@@ -26,7 +26,7 @@ export default function StudentLayout({ children }) {
       <StudentBackground className="pointer-events-none" />
 
       {/* Sidebar */}
-      <aside className="w-56 bg-white/40 backdrop-blur-md flex flex-col m-3 rounded-2xl shadow-sm fixed top-0 left-0 h-[calc(100vh-24px)] z-20">
+      <aside className="w-56 bg-white/40 backdrop-blur-[4px] flex flex-col m-3 rounded-2xl shadow-sm fixed top-0 left-0 h-[calc(100vh-24px)] z-20">
         <div className="px-6 py-6 border-b border-white/50">
           <h1 className="text-xl font-bold text-gray-800">Student</h1>
 

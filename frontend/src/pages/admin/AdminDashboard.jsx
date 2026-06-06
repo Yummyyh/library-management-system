@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function AdminDashboard() {
   return (
     <div className="h-full p-6 bg-transparent flex flex-col justify-start overflow-hidden">
-      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
 
         {/* Header — pure text, no Logout button */}
         <div className="flex-shrink-0">

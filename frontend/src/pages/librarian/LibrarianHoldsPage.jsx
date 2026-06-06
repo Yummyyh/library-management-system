@@ -57,7 +57,7 @@ export default function LibrarianHoldsPage() {
 
   return (
     <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
-      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden animate-page-fade">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden animate-page-fade">
 
         {/* ========== 固定顶栏 ========== */}
         <div className="flex-shrink-0 flex justify-between items-center flex-wrap gap-4">

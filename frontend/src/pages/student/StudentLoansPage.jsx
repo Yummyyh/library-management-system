@@ -106,7 +106,7 @@ export default function StudentLoansPage() {
     <div className="min-h-screen p-6 bg-transparent flex flex-col">
       
       {/* 统一的大矩形半透明面板 - 容器本身 overflow-hidden 锁定 */}
-      <div className="max-w-[1920px] w-full mx-auto flex-1 bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto flex-1 bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
         
         {/* 【固定区域】：标题和筛选交互控制保持在顶部不随动 */}
         <div className="flex-shrink-0 flex flex-col space-y-5">
@@ -175,7 +175,7 @@ export default function StudentLoansPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="bg-white/80 hover:bg-blue-500 hover:text-white transition-colors"
+                        className="bg-white/90 hover:bg-blue-500 hover:text-white transition-colors"
                         onClick={() => handleRenew(row.loanId)}
                         disabled={renewingId === row.loanId || !canRenew(row)}
                       >

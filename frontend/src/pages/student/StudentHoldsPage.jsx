@@ -48,7 +48,7 @@ export default function StudentHoldsPage() {
     <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden">
       
       {/* 外层大面板：完美咬合高度，内部禁止溢出 */}
-      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
         
         {/* 固定顶栏：头部和操作按钮固定在最上方，不参与滚动 */}
         <div className="flex-shrink-0">
@@ -111,7 +111,7 @@ export default function StudentHoldsPage() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="bg-white/80 hover:bg-red-50 hover:text-white transition-colors" 
+                        className="bg-white/90 hover:bg-red-50 hover:text-white transition-colors" 
                         onClick={() => handleCancel(h.id)}
                       >
                         Cancel

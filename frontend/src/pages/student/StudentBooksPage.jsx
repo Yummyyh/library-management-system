@@ -210,7 +210,7 @@ export default function StudentBooksPage() {
     <div className="h-screen p-6 bg-transparent flex flex-col justify-start overflow-hidden relative">
       
       {/* 全局大矩形半透明面板 */}
-      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
+      <div className="max-w-[1920px] w-full mx-auto h-full bg-white/90 backdrop-blur-[4px] rounded-2xl p-6 shadow-md border border-white/40 flex flex-col space-y-5 overflow-hidden">
         
         {/* 固定顶栏区域 */}
         <div className="flex-shrink-0 flex flex-col space-y-5">
@@ -256,7 +256,7 @@ export default function StudentBooksPage() {
             <Button
               type="button"
               variant="secondary"
-              className="bg-white/60 hover:bg-white/80 border border-gray-200/50"
+              className="bg-white/60 hover:bg-white/90 border border-gray-200/50"
               disabled={!activeQ && !q.trim()}
               onClick={clearFilter}
             >
@@ -395,7 +395,7 @@ export default function StudentBooksPage() {
                           <Button size="sm" disabled={!available || borrowingId === b.id} onClick={() => borrow(b)}>
                             {borrowingId === b.id ? 'Processing…' : 'Borrow'}
                           </Button>
-                          <Button size="sm" variant="outline" className="bg-white/80" disabled={holdingId === b.id} onClick={() => holdBook(b)}>
+                          <Button size="sm" variant="outline" className="bg-white/90" disabled={holdingId === b.id} onClick={() => holdBook(b)}>
                             {holdingId === b.id ? '…' : 'Reserve'}
                           </Button>
                         </div>
@@ -413,7 +413,7 @@ export default function StudentBooksPage() {
           【从 Dashboard 转移过来的通知弹窗 UI】
           ========================================== */}
       <Dialog open={showNotifications} onOpenChange={handleNotificationOpenChange}>
-        <DialogContent className="max-w-md bg-white/95 backdrop-blur-md">
+        <DialogContent className="max-w-md bg-white/95 backdrop-blur-[4px]">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-gray-800">Notifications</DialogTitle>
           </DialogHeader>
