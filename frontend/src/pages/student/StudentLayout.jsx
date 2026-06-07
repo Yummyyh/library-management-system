@@ -28,7 +28,7 @@ export default function StudentLayout({ children }) {
       {/* Sidebar */}
       <aside className="w-56 bg-white/40 backdrop-blur-[4px] flex flex-col m-3 rounded-2xl shadow-sm fixed top-0 left-0 h-[calc(100vh-24px)] z-20">
         <div className="px-6 py-6 border-b border-white/50">
-          <h1 className="text-xl font-bold text-gray-800">Student</h1>
+          <h1 className="text-xl font-bold text-gray-800">Reader</h1>
 
           <p className="text-xs text-gray-400 mt-1">{student?.studentId}</p>
         </div>

@@ -84,7 +84,7 @@ export default function StudentDashboard() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold">🎓 Student Portal</h1>
+              <h1 className="text-3xl font-bold">🎓 Reader Portal</h1>
               <p className="text-muted-foreground mt-1">
                 {student ? `Welcome, ${student.name} (${student.studentId})` : 'Welcome'}
               </p>

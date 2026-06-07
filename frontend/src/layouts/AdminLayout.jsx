@@ -3,6 +3,7 @@ import { studentSession } from '@/lib/studentSession';
 import AdminBackground from '@/components/ui/AdminBackground';
 
 const navItems = [
+  { label: 'Dashboard', path: '/admin/dashboard' },
   { label: 'User Management', path: '/admin/users' },
   { label: 'System Settings', path: '/admin/settings' },
 ];

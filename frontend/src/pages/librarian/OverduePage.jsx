@@ -115,8 +115,8 @@ export default function OverduePage() {
                       aria-label="Select all"
                     />
                   </TableHead>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Student ID</TableHead>
+                  <TableHead>Reader</TableHead>
+                  <TableHead>Reader ID</TableHead>
                   <TableHead>Book</TableHead>
                   <TableHead>Author</TableHead>
                   <TableHead>Due Date</TableHead>

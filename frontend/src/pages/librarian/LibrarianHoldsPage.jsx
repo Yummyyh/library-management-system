@@ -86,7 +86,7 @@ export default function LibrarianHoldsPage() {
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-white/90 backdrop-blur-sm z-10 shadow-sm">
                   <tr className="text-left">
-                    <th className="p-3 font-medium text-gray-500">Student</th>
+                    <th className="p-3 font-medium text-gray-500">Reader</th>
                     <th className="p-3 font-medium text-gray-500">Book</th>
                     <th className="p-3 font-medium text-gray-500">ISBN</th>
                     <th className="p-3 font-medium text-gray-500">Status</th>

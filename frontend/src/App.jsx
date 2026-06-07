@@ -9,6 +9,7 @@ import './App.css'
 import LoginPage from './pages/LoginPage'
 
 // Admin 页面
+import AdminDashboard from './pages/admin/AdminDashboard'
 import UsersPage from './pages/admin/UsersPage'
 import SettingsPage from './pages/admin/SettingsPage'
 
@@ -67,7 +68,12 @@ function App() {
         {/* 👑 Admin 路由 */}
         <Route path="/admin" element={
           <AdminGuard>
-            <Navigate to="/admin/users" replace />
+            <Navigate to="/admin/dashboard" replace />
+          </AdminGuard>
+        } />
+        <Route path="/admin/dashboard" element={
+          <AdminGuard>
+            <AdminLayout><AdminDashboard /></AdminLayout>
           </AdminGuard>
         } />
         <Route path="/admin/users" element={

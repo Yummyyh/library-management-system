@@ -47,7 +47,7 @@ export default function LoginPage() {
 
     if (isStudentLogin) {
       if (!form.studentId || !form.password) {
-        return toast({ variant: 'destructive', title: 'Validation Failed', description: 'Please enter student ID and password' });
+        return toast({ variant: 'destructive', title: 'Validation Failed', description: 'Please enter reader ID and password' });
       }
     } else {
       if (!form.email || !form.password) {
@@ -101,7 +101,7 @@ export default function LoginPage() {
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="student">Student</SelectItem>
+              <SelectItem value="student">Reader</SelectItem>
               <SelectItem value="librarian">Librarian</SelectItem>
               <SelectItem value="admin">Administrator</SelectItem>
             </SelectContent>
@@ -110,7 +110,7 @@ export default function LoginPage() {
 
         {isStudentLogin ? (
           <div className="grid gap-2">
-            <Label>Student ID</Label>
+            <Label>Reader ID</Label>
             <Input
               value={form.studentId}
               onChange={e => setForm({ ...form, studentId: e.target.value })}

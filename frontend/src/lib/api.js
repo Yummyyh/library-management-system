@@ -291,6 +291,16 @@ export const adminAuthAPI = {
   }),
 };
 
+// 📊 Dashboard API
+export const dashboardAPI = {
+  /** GET /api/dashboard/summary — 图书馆运营数据总览 */
+  getSummary: () =>
+    request(API_ORIGIN, '/api/dashboard/summary', {
+      headers: adminAuthHeaders(),
+      skipAuthRedirect: true, // 无 token 时不清除 session，仅抛错
+    }),
+};
+
 export const librarianAuthAPI = {
   login: (data) => request(LIB_API_BASE, '/auth/login', {
     method: 'POST', body: JSON.stringify(data)

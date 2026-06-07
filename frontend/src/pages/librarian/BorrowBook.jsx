@@ -7,19 +7,40 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { librarianAPI } from '@/lib/api';
+import { librarianAPI, configAPI } from '@/lib/api';
 import dayjs from 'dayjs';
 
 export default function BorrowBook() {
   const { toast } = useToast();
   const [barcode, setBarcode] = useState('');
   const [studentId, setStudentId] = useState('');
-  const [dueDate, setDueDate] = useState('');
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [loans, setLoans] = useState([]);
   const [loansLoading, setLoansLoading] = useState(true);
+
+  // Auto‑calculated due date from system BORROW_DAYS config
+  const [borrowDays, setBorrowDays] = useState(14);
+  const [dueDate, setDueDate] = useState('');
+
+  // Derive dueDate whenever borrowDays is known
+  useEffect(() => {
+    const d = dayjs().add(borrowDays, 'day').format('YYYY-MM-DD');
+    setDueDate(d);
+  }, [borrowDays]);
+
+  // Fetch lending policy config on mount
+  useEffect(() => {
+    configAPI.getAll()
+      .then(data => {
+        // API returns { list: [{ key: 'BORROW_DAYS', value: '31' }, ...] }
+        const map = Object.fromEntries((data?.list || []).map(r => [r.key, r.value]));
+        const days = Number(map.BORROW_DAYS);
+        if (Number.isFinite(days) && days > 0) setBorrowDays(days);
+      })
+      .catch(() => { /* keep default 14 days */ });
+  }, []);
 
   const fetchLoans = useCallback(async () => {
     try {
@@ -48,7 +69,7 @@ export default function BorrowBook() {
       setLoading(true);
       await librarianAPI.checkout({ barcode, studentId, dueDate });
       toast({ title: 'Borrow Successful', description: 'Checkout completed' });
-      setBarcode(''); setStudentId(''); setDueDate('');
+      setBarcode(''); setStudentId('');
       fetchLoans();
     } catch (err) {
       toast({ variant: 'destructive', title: 'Borrow Failed', description: err.message });
@@ -100,8 +121,8 @@ export default function BorrowBook() {
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label>Due Date *</Label>
-              <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <Label>Due Date * <span className="text-xs font-normal text-gray-400">(auto: today + {borrowDays} days)</span></Label>
+              <Input type="text" value={dueDate} readOnly className="bg-gray-50/80 text-gray-600 cursor-default" />
             </div>
             <Button
               onClick={borrowBook}
@@ -121,7 +142,7 @@ export default function BorrowBook() {
                   <TableHeader className="sticky top-0 bg-white z-10 shadow-sm">
                     <TableRow>
                       <TableHead>Barcode</TableHead>
-                      <TableHead>Student</TableHead>
+                      <TableHead>Reader</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>

@@ -60,6 +60,10 @@ app.post('/api/student/holds', studentAuth, holdController.createHold);
 app.get('/api/student/holds', studentAuth, holdController.listMyHolds);
 app.delete('/api/student/holds/:id', studentAuth, holdController.cancelMyHold);
 
+// 📊 Dashboard / Statistics routes (ported from DASH BOARD)
+const dashboardRoutes = require('./routes/dashboard');
+app.use('/api/dashboard', dashboardRoutes);
+
 // 🔍 External API routes (ISBN Lookup, etc.) ✅ 新增
 app.use('/api/external', externalRoutes);
 

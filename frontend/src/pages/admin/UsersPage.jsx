@@ -118,7 +118,7 @@ export default function UsersPage() {
                   <Input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
                 <div className="grid gap-2">
-                  <Label>Student ID *</Label>
+                  <Label>Reader ID *</Label>
                   <Input required value={form.studentId} onChange={(e) => setForm({ ...form, studentId: e.target.value })} />
                 </div>
                 <div className="grid gap-2">
@@ -126,7 +126,7 @@ export default function UsersPage() {
                   <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
                     <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="STUDENT">Student</SelectItem>
+                      <SelectItem value="STUDENT">Reader</SelectItem>
                       <SelectItem value="LIBRARIAN">Librarian</SelectItem>
                       <SelectItem value="ADMIN">Administrator</SelectItem>
                     </SelectContent>
@@ -161,7 +161,7 @@ export default function UsersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Student ID</TableHead>
+                  <TableHead>Reader ID</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>

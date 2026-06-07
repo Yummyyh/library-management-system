@@ -7,7 +7,7 @@ const navItems = [
   { label: 'Borrow Book', path: '/librarian/borrow' },
   { label: 'Return Book', path: '/librarian/return' },
   { label: 'Reservations', path: '/librarian/holds' },
-  { label: 'Fines Management', path: '/librarian/overdue' },
+  { label: 'Overdue Tracking', path: '/librarian/overdue' },
 ];
 
 export default function LibrarianLayout({ children }) {

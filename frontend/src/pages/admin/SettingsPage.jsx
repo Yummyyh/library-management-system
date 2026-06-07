@@ -108,8 +108,6 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [runningBackup, setRunningBackup] = useState(false);
   const [validationError, setValidationError] = useState('');
-  const [currentLoans, setCurrentLoans] = useState('');
-  const [simulatorResult, setSimulatorResult] = useState(null);
   const [auditLog, setAuditLog] = useState([]);
   const [auditLoading, setAuditLoading] = useState(true);
 
@@ -143,21 +141,6 @@ export default function SettingsPage() {
     loadSettings();
     loadAuditLog();
   }, [loadSettings, loadAuditLog]);
-
-  const maxBooks = Number(form.BORROW_LIMIT) || 0;
-
-  const handleValidateRule = () => {
-    const loans = Number(currentLoans);
-    if (!Number.isFinite(loans) || loans < 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Input',
-        description: 'Please enter a valid number of current loans.',
-      });
-      return;
-    }
-    setSimulatorResult(loans >= maxBooks ? 'Borrowing Limit Exceeded' : 'Allowed');
-  };
 
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -319,53 +302,6 @@ export default function SettingsPage() {
               </div>
               {validationError && (
                 <p className="text-sm text-red-600 font-medium">{validationError}</p>
-              )}
-            </section>
-
-            {/* US26 — Borrowing Rule Simulator */}
-            <section className="border border-gray-100/60 rounded-xl bg-white/60 p-6 space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">Borrowing Rule Simulator</h2>
-              <p className="text-sm text-muted-foreground">
-                Enter a student&apos;s current loan count to check eligibility against the configured limit.
-              </p>
-              <StatusPanel
-                label="Configured Max Books (BORROW_LIMIT)"
-                value={maxBooks > 0 ? String(maxBooks) : '—'}
-                positive={false}
-              />
-              <div className="grid gap-2">
-                <Label htmlFor="current-loans">Current Loans</Label>
-                <Input
-                  id="current-loans"
-                  type="number"
-                  min="0"
-                  step="1"
-                  className="bg-white/60 border-gray-200"
-                  value={currentLoans}
-                  onChange={(e) => {
-                    setCurrentLoans(e.target.value);
-                    setSimulatorResult(null);
-                  }}
-                />
-              </div>
-              <Button type="button" variant="outline" onClick={handleValidateRule}
-                className="bg-white/60 hover:bg-white/90 border border-gray-200/60 text-gray-600 rounded-xl">
-                Validate Rule
-              </Button>
-              {simulatorResult && (
-                <div className="rounded-lg border border-gray-100/60 p-4 space-y-2 bg-white/40">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Validation Result</p>
-                  <p
-                    className={`text-sm font-medium ${
-                      simulatorResult === 'Allowed' ? 'text-green-700' : 'text-red-600'
-                    }`}
-                  >
-                    {simulatorResult}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Current loans: {currentLoans} / Max: {maxBooks > 0 ? maxBooks : '—'}
-                  </p>
-                </div>
               )}
             </section>
 
