@@ -54,4 +54,4 @@ Librarian / 馆员端：
 Admin / 管理员端：
 1. System configuration (General / Borrowing Limits / Backup / Audit Log) — 系统配置（通用 / 借阅限额 / 备份 / 审计日志）
 2. Config sync to borrow / return business logic — 配置同步至借还业务逻辑
-3. Dashboa 数字化看板
+3. Dashboad 数字化看板

@@ -20,6 +20,13 @@ const ALLOWED_KEYS = [
   'DAILY_FINE',
 ];
 
+// Numeric config keys and their parsing rules
+const NUMERIC_CONFIG_KEYS = {
+  BORROW_LIMIT: { parser: (v) => parseInt(v, 10), label: 'BORROW_LIMIT', integer: true, min: 1 },
+  BORROW_DAYS:  { parser: (v) => parseInt(v, 10), label: 'BORROW_DAYS',  integer: true, min: 1 },
+  DAILY_FINE:   { parser: (v) => parseFloat(v),     label: 'DAILY_FINE',   integer: false, min: 0 },
+};
+
 /**
  * GET /api/config
  * Return all supported configuration items.
@@ -71,6 +78,17 @@ exports.updateConfig = async (req, res, next) => {
 
     if (value === undefined || value === null || String(value).trim() === '') {
       return res.status(400).json(error('Configuration value cannot be empty', 400));
+    }
+
+    // Validate numeric config keys — use parseFloat for decimals (DAILY_FINE),
+    // parseInt for integers (BORROW_LIMIT, BORROW_DAYS)
+    const numericRule = NUMERIC_CONFIG_KEYS[key];
+    if (numericRule) {
+      const parsed = numericRule.parser(value);
+      if (!Number.isFinite(parsed) || parsed < numericRule.min) {
+        const hint = numericRule.integer ? 'a valid positive integer' : 'a valid non-negative number (float allowed)';
+        return res.status(400).json(error(`${numericRule.label} must be ${hint}`, 400));
+      }
     }
 
     const normalizedValue = String(value).trim();
